@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../post.dart';
+import 'lenta.dart';
 import 'login.dart';
 
 class Register extends StatefulWidget {
@@ -122,7 +124,30 @@ class _RegisterState extends State<Register> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Переход на ленту
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Lenta(
+                          posts: [
+                            Post(
+                                content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
+                                title: 'Отчет об уборке мусора',
+                                username: 'Грета',
+                                avatarUrl: 'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
+                                rating: 100,
+                                tags: ['#Уборка', '#Воронеж', '#Мусор'],
+                                imageUrl: 'https://vremenynet.ru/image_3814.png'),
+                            Post(
+                              content: 'Уличные животные тоже хотят еды и тепла. Пожалуйста, помогайте нам!',
+                              title: 'Не забывайте нас!',
+                              username: 'Мистер Кот',
+                              avatarUrl: 'https://static5.tgstat.ru/channels/_0/af/af18c25836a1cac48b3e857f96911013.jpg',
+                              rating: 200,
+                              tags: ['#Животные', '#Кот'],
+                            )
+                          ]
+                      )
+                      ), // Переход на экран ленты
+                    );
                   },
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.green),
