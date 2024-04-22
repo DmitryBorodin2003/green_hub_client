@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../post.dart';
+import 'lenta.dart';
 import 'register.dart';
 
 class Login extends StatefulWidget {
@@ -16,7 +18,51 @@ class _LoginState extends State<Login> {
     String name = _nameController.text.trim();
     String password = _passwordController.text.trim();
 
-    //Здесь будет переход на ленту
+    if (name.isNotEmpty && password.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => Lenta(
+                posts: [
+                  Post(
+                      content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
+                      title: 'Отчет об уборке мусора',
+                      username: 'Грета',
+                      avatarUrl: 'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
+                      rating: 100,
+                      tags: ['#Уборка', '#Воронеж', '#Мусор'],
+                      imageUrl: 'https://vremenynet.ru/image_3814.png'),
+                  Post(
+                    content: 'Уличные животные тоже хотят еды и тепла. Пожалуйста, помогайте нам!',
+                    title: 'Не забывайте нас!',
+                    username: 'Мистер Кот',
+                    avatarUrl: 'https://static5.tgstat.ru/channels/_0/af/af18c25836a1cac48b3e857f96911013.jpg',
+                    rating: 200,
+                    tags: ['#Животные', '#Кот'],
+                  )
+                ]
+            )
+        ), // Переход на экран ленты
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text('Некорректный ввод'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
 
