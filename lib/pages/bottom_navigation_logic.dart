@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
 
 import '../post.dart';
+import 'my_profile.dart';
 
 class BottomNavigationLogic {
   static void handleNavigation(BuildContext context, int index) {
@@ -74,23 +75,33 @@ class BottomNavigationLogic {
         );
         break;
       case 3:
-      // Действия при выборе профиля
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Страница профиля'),
-              content: Text('Здесь будет переход на страницу профиля'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Закрыть'),
+        // Действия при выборе профиля
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Profile(
+              posts: [
+                Post(
+                  content: 'Мы открыли новый центр переработки! Ждем всех!',
+                  title: 'Новый центр переработки!',
+                  username: 'Райан',
+                  rating: 92,
+                  tags: ['#Мусор', '#Воронеж'],
+                  avatarUrl: 'https://i.pinimg.com/originals/2b/64/2f/2b642f9183fa80b8c47a9d8f8971eb4d.jpg',
+                  imageUrl:
+                  'https://iq.vgoroden.ru/qs07ga0ow6io7_1f4ej61/krupneyshiy-v-rossii-musorosortirovochnyy-kompleks-otkrylsya-v-nizhegorodskoy-oblasti-foto-foto-8.jpeg',
                 ),
+                Post(
+                  content: 'Она как для мясоедов только без мяса',
+                  title: 'Новая реклама веганской еды!',
+                  username: 'Райан',
+                  avatarUrl: 'https://i.pinimg.com/originals/2b/64/2f/2b642f9183fa80b8c47a9d8f8971eb4d.jpg',
+                  rating: 100500,
+                  tags: ['#Еда', '#Хавка'],
+                )
               ],
-            );
-          },
+            ),
+          ),
         );
         break;
       default:
