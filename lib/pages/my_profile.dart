@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../post.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
 
@@ -133,7 +134,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.pushReplacement(
                                 context,
-                                MaterialPageRoute(builder: (context) => Login()),
+                                CustomPageRoute(page: Login()),
                               );
                             },
                             child: Container(

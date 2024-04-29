@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../post.dart';
+import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'register.dart';
 
@@ -21,8 +22,8 @@ class _LoginState extends State<Login> {
     if (name.isNotEmpty && password.isNotEmpty) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (context) => Lenta(
+        CustomPageRoute(
+            page: Lenta(
                 posts: [
                   Post(
                       content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
@@ -129,7 +130,7 @@ class _LoginState extends State<Login> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => Register()), // Перенаправление на страницу входа
+                        CustomPageRoute(page: Register()), // Перенаправление на страницу входа
                       );
                     },
                     child: Text(
