@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
+import 'package:green_hub_client/pages/subscriptions.dart';
 
 import '../post.dart';
+import 'custom_page_route.dart';
 import 'my_profile.dart';
 
 class BottomNavigationLogic {
@@ -10,8 +12,8 @@ class BottomNavigationLogic {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => Lenta(
+          CustomPageRoute(
+            page: Lenta(
               posts: [
                 Post(
                     content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
@@ -56,30 +58,27 @@ class BottomNavigationLogic {
         break;
       case 2:
       // Действия при выборе страницы подписок
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Страница подписок'),
-              content: Text('Здесь будет переход на страницу подписок/подписчиков'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Закрыть'),
-                ),
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+            page: Subscriptions(
+              subscriptionList: [
+                User(name: 'Леонардо'),
+                User(name: 'Андрей'),
+                User(name: 'Вячеслав'),
+                User(name: 'Александр')
               ],
-            );
-          },
+              followerList: [User(name: 'Андрей')],
+            ),
+          ),
         );
         break;
       case 3:
         // Действия при выборе профиля
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => Profile(
+          CustomPageRoute(
+            page: Profile(
               posts: [
                 Post(
                   content: 'Мы открыли новый центр переработки! Ждем всех!',

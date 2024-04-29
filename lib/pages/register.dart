@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../post.dart';
+import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
 
@@ -126,7 +127,7 @@ class _RegisterState extends State<Register> {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => Lenta(
+                      CustomPageRoute(page: Lenta(
                           posts: [
                             Post(
                                 content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
@@ -174,7 +175,7 @@ class _RegisterState extends State<Register> {
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => Login()),
+                        CustomPageRoute(page: Login()),
                       );
                     },
                     child: Text(
