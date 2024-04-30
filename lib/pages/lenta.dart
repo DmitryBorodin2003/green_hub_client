@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/profile.dart';
 
 import '../../post.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'custom_page_route.dart';
 
 class Lenta extends StatefulWidget {
   final List<Post> posts; // Список постов
@@ -146,31 +148,65 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                       Row(
                         children: [
                           post.avatarUrl != null
-                              ? ClipOval(
-                            child: Image.network(
-                              post.avatarUrl!,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(Icons.error);
-                              },
+                              ? GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                  context,
+                                  CustomPageRoute(
+                                    page: NotMyProfile(posts: [
+                                      Post(
+                                      content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
+                                      title: 'Отчет об уборке мусора',
+                                      username: 'Грета',
+                                      avatarUrl: 'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
+                                      rating: 100,
+                                      tags: ['#Уборка', '#Воронеж', '#Мусор'],
+                                      imageUrl: 'https://vremenynet.ru/image_3814.png'),
+                                      Post(
+                                      content: 'Я Грета Тунберг, теперь буду здесь делиться с вами важной информацией',
+                                      title: 'Здравствуйте!',
+                                      username: 'Грета',
+                                      avatarUrl: 'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
+                                      rating: 200,
+                                      tags: ['#Уборка', '#Чистота'],
+                                      )
+                              ]
+                              ),
+                              ),
+                              );
+                            },
+                            child: ClipOval(
+                              child: Image.network(
+                                post.avatarUrl!,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.error);
+                                },
+                              ),
                             ),
                           )
-                              : CircleAvatar(
-                            radius: 25,
-                            backgroundColor: Colors.grey,
-                            child: Text(post.username[0]),
+                              : GestureDetector(
+                            onTap: () {
+                              // Handle avatar click action here
+                            },
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.grey,
+                              child: Text(post.username[0]),
+                            ),
                           ),
                           SizedBox(width: 8),
                           Text(
