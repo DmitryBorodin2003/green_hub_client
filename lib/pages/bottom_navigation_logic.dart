@@ -3,6 +3,7 @@ import 'package:green_hub_client/pages/lenta.dart';
 import 'package:green_hub_client/pages/subscriptions.dart';
 
 import '../post.dart';
+import 'createpost.dart';
 import 'custom_page_route.dart';
 import 'my_profile.dart';
 
@@ -38,22 +39,11 @@ class BottomNavigationLogic {
         break;
       case 1:
       // Действия при выборе создания поста
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Создание поста'),
-              content: Text('Здесь будет меню создания поста'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('Закрыть'),
-                ),
-              ],
-            );
-          },
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+            page: Createpost(),
+          ),
         );
         break;
       case 2:
