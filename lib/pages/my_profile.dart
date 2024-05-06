@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../post.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'comments.dart';
 import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
@@ -292,28 +293,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text("Вы точно хотите удалить публикацию?"),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text("Нет"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text("Нет"),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
+                                    _showDeleteConfirmationDialog(index);
                                   },
 
                                   style: ElevatedButton.styleFrom(
@@ -385,22 +365,11 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                 ),
                                 IconButton(
                                   onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('Страница комментариев'),
-                                          content: Text('Здесь будет страница комментариев'),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Закрыть'),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                                    Navigator.push(
+                                      context,
+                                      CustomPageRoute(
+                                        page: Comments(),
+                                      ),
                                     );
                                   },
                                   icon: Icon(Icons.message),
@@ -443,6 +412,39 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
           BottomNavigationLogic.handleNavigation(context, index);
         },
       ),
+    );
+  }
+
+  void _deletePost(int index) {
+    setState(() {
+      widget.posts.removeAt(index);
+    });
+  }
+
+  // Метод для показа диалогового окна удаления поста
+  void _showDeleteConfirmationDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Вы точно хотите удалить публикацию?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Нет"),
+            ),
+            TextButton(
+              onPressed: () {
+                _deletePost(index); // Удаляем пост
+                Navigator.of(context).pop(); // Закрываем диалоговое окно
+              },
+              child: Text("Да"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:green_hub_client/pages/profile.dart';
 import '../../post.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'comments.dart';
 import 'custom_page_route.dart';
 
 class Lenta extends StatefulWidget {
@@ -17,12 +18,176 @@ class Lenta extends StatefulWidget {
 
 class _LentaState extends State<Lenta> with TickerProviderStateMixin {
   late TabController _tabController;
+  int? selectedOptionIndex; // Индекс выбранной опции сортировки
+  List<String> _selectedTags = [];
+  List<String> _availableTags = [
+    '#Воронеж',
+    '#Уборка',
+    '#Мусор',
+    '#Животные',
+  ];
+
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.index = 0; // Устанавливаем активную вкладку по умолчанию
+    selectedOptionIndex = 0; // При инициализации выбора нет
+  }
+
+  Future<void> _showTagSelectionDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              backgroundColor: Color(0xFFDCFED7), // Цвет фона окна
+              shape: RoundedRectangleBorder( // Скругление углов
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              title: Text(
+                'Выберите теги',
+                textAlign: TextAlign.center, // Центрирование заголовка
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 1, // Серая полоска
+                    color: Colors.grey,
+                  ),
+                  ..._availableTags.map((tag) {
+                    bool isSelected = _selectedTags.contains(tag);
+                    return CheckboxListTile(
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(tag),
+                      value: isSelected,
+                      onChanged: (bool? selected) {
+                        setState(() {
+                          if (selected ?? false) {
+                            _selectedTags.add(tag);
+                          } else {
+                            _selectedTags.remove(tag);
+                          }
+                        });
+                      },
+                    );
+                  }),
+                ],
+              ),
+              actions: <Widget>[
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 50.0, vertical: 15.0),
+                    ),
+                    child: Text('ОК'),
+                  ),
+                ),
+                SizedBox(height: 10), // Добавленное расстояние
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showSortOptionsDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              backgroundColor: Color(0xFFDCFED7), // Цвет фона окна
+              shape: RoundedRectangleBorder( // Скругление углов
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              title: Text(
+                'Сортировка',
+                textAlign: TextAlign.center, // Центрирование заголовка
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 1, // Серая полоска
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 10),
+                  // Первая опция сортировки: По количеству лайков
+                  RadioListTile<int>(
+                    value: 0,
+                    groupValue: selectedOptionIndex,
+                    onChanged: (int? value) {
+                      setState(() {
+                        selectedOptionIndex = value;
+                      });
+                    },
+                    title: Text(
+                      'По количеству лайков',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: selectedOptionIndex == 0 ? Colors.green : Colors.black,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  // Вторая опция сортировки: По свежести
+                  RadioListTile<int>(
+                    value: 1,
+                    groupValue: selectedOptionIndex,
+                    onChanged: (int? value) {
+                      setState(() {
+                        selectedOptionIndex = value;
+                      });
+                    },
+                    title: Text(
+                      'По свежести',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: selectedOptionIndex == 1 ? Colors.green : Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Закрываем диалоговое окно
+                      // логика сортировки на основе выбранной опции
+                    },
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 50.0, vertical: 15.0),
+                    ),
+                    child: Text('ОК'),
+                  ),
+                ),
+                SizedBox(height: 10), // Добавленное расстояние
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -30,6 +195,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Color(0xFFDCFED7), // Цвет фона
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Color(0xFFDCFED7), // Цвет фона апп-бара
         toolbarHeight: 125, // Увеличиваем высоту апп-бара
         title: Column(
@@ -50,46 +216,14 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   IconButton(
                     icon: Icon(Icons.arrow_upward), // Значок стрелочки
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Сортировка'),
-                            content: Text('Здесь будет выбор - по количеству лайков или по количеству комментариев'),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Закрыть'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                      _showSortOptionsDialog();
                     },
                     color: Colors.black, // Устанавливаем цвет иконки
                   ),
                   IconButton(
                     icon: Icon(Icons.filter_list), // Значок фильтра
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Выберите теги'),
-                            content: Text('Здесь будет меню выбора тегов'),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('Закрыть'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                      _showTagSelectionDialog();
                     },
                     color: Colors.black, // Устанавливаем цвет иконки
                   ),
@@ -209,9 +343,14 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Text(
-                            post.username,
-                            style: TextStyle(fontSize: 25),
+                          GestureDetector(
+                            onTap: () {
+                              // Handle username click action here
+                            },
+                            child: Text(
+                              post.username,
+                              style: TextStyle(fontSize: 25),
+                            ),
                           ),
                           SizedBox(width: 8),
                         ],
@@ -265,22 +404,11 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                           ),
                           IconButton(
                             onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Страница комментариев'),
-                                    content: Text('Здесь будет страница комментариев'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text('Закрыть'),
-                                      ),
-                                    ],
-                                  );
-                                },
+                              Navigator.push(
+                                context,
+                                CustomPageRoute(
+                                  page: Comments(),
+                                ),
                               );
                             },
                             icon: Icon(Icons.message),
