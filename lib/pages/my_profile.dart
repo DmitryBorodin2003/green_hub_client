@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import '../post.dart';
 import 'bottom_navigation_bar.dart';
@@ -97,6 +98,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                           SizedBox(height: 6),
                           InkWell(
                             onTap: () {
+                              AppMetrica.reportEvent('Click on "Edit profile" button');
                               showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
@@ -133,6 +135,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                           SizedBox(height: 8),
                           InkWell(
                             onTap: () {
+                              AppMetrica.reportEvent('Click on "Quit" button');
                               Navigator.pushReplacement(
                                 context,
                                 CustomPageRoute(page: Login()),
@@ -293,6 +296,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
+                                    AppMetrica.reportEvent('Click on "Delete post" button');
                                     _showDeleteConfirmationDialog(index);
                                   },
 
@@ -352,11 +356,15 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                     Row(
                                       children: [
                                         IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            AppMetrica.reportEvent('Click on "Like" button');
+                                          },
                                           icon: Icon(Icons.thumb_up),
                                         ),
                                         IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            AppMetrica.reportEvent('Click on "Dislike" button');
+                                          },
                                           icon: Icon(Icons.thumb_down),
                                         ),
                                       ],
@@ -365,6 +373,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                 ),
                                 IconButton(
                                   onPressed: () {
+                                    AppMetrica.reportEvent('Click on "Comments" button');
                                     Navigator.push(
                                       context,
                                       CustomPageRoute(
@@ -431,12 +440,14 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
           actions: <Widget>[
             TextButton(
               onPressed: () {
+                AppMetrica.reportEvent('Click on "Cancel delete" button');
                 Navigator.of(context).pop();
               },
               child: Text("Нет"),
             ),
             TextButton(
               onPressed: () {
+                AppMetrica.reportEvent('Click on "Confirm delete" button');
                 _deletePost(index); // Удаляем пост
                 Navigator.of(context).pop(); // Закрываем диалоговое окно
               },

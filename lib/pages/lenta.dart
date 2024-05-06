@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/profile.dart';
 
@@ -216,6 +217,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   IconButton(
                     icon: Icon(Icons.arrow_upward), // Значок стрелочки
                     onPressed: () {
+                      AppMetrica.reportEvent('Click on "Sort" button');
                       _showSortOptionsDialog();
                     },
                     color: Colors.black, // Устанавливаем цвет иконки
@@ -223,6 +225,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   IconButton(
                     icon: Icon(Icons.filter_list), // Значок фильтра
                     onPressed: () {
+                      AppMetrica.reportEvent('Click on "Filter" button');
                       _showTagSelectionDialog();
                     },
                     color: Colors.black, // Устанавливаем цвет иконки
@@ -284,6 +287,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                           post.avatarUrl != null
                               ? GestureDetector(
                             onTap: () {
+                              AppMetrica.reportEvent('Click on "Not my profile" button');
                               Navigator.pushReplacement(
                                   context,
                                   CustomPageRoute(
@@ -391,11 +395,11 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                               Row(
                                 children: [
                                   IconButton(
-                                    onPressed: () {},
+                                    onPressed: () {AppMetrica.reportEvent('Click on "Like" button');},
                                     icon: Icon(Icons.thumb_up),
                                   ),
                                   IconButton(
-                                    onPressed: () {},
+                                    onPressed: () {AppMetrica.reportEvent('Click on "Dislike" button');},
                                     icon: Icon(Icons.thumb_down),
                                   ),
                                 ],
@@ -404,6 +408,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                           ),
                           IconButton(
                             onPressed: () {
+                              AppMetrica.reportEvent('Click on "Comments" button');
                               Navigator.push(
                                 context,
                                 CustomPageRoute(

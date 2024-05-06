@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -101,6 +102,7 @@ class _CreatePostState extends State {
 
   // Функция для обработки нажатия на кнопку "Добавить"
   void _onAddButtonPressed() {
+    AppMetrica.reportEvent('Click on "Add post" button');
     // TODO: Действия при нажатии на кнопку "Добавить"
   }
 

@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 
 import 'bottom_navigation_bar.dart';
@@ -106,7 +107,7 @@ class SubscriptionsList extends StatelessWidget {
             trailing: isSubscriptionList
                 ? ElevatedButton(
               onPressed: () {
-                // Здесь должна быть логика отписки
+                AppMetrica.reportEvent('Click on "Unsubscribe" button');
               },
               style: ElevatedButton.styleFrom(
                 primary: Colors.red, // Устанавливаем красный цвет кнопки

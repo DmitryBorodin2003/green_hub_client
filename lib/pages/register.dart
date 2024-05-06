@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import '../post.dart';
 import 'custom_page_route.dart';
@@ -88,6 +89,7 @@ class _RegisterState extends State<Register> {
                       ),
                       InkWell(
                         onTap: () {
+                          AppMetrica.reportEvent('Click on "Terms of use" button');
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
@@ -125,6 +127,7 @@ class _RegisterState extends State<Register> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    AppMetrica.reportEvent('Click on "Register" button');
                     Navigator.pushReplacement(
                       context,
                       CustomPageRoute(page: Lenta(
@@ -173,6 +176,7 @@ class _RegisterState extends State<Register> {
                   ),
                   InkWell(
                     onTap: () {
+                      AppMetrica.reportEvent('Click on "register to login" button');
                       Navigator.pushReplacement(
                         context,
                         CustomPageRoute(page: Login()),

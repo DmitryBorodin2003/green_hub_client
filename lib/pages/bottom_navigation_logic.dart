@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
 import 'package:green_hub_client/pages/subscriptions.dart';
@@ -11,6 +12,7 @@ class BottomNavigationLogic {
   static void handleNavigation(BuildContext context, int index) {
     switch (index) {
       case 0:
+        AppMetrica.reportEvent('Click on "Lenta" button');
         Navigator.pushReplacement(
           context,
           CustomPageRoute(
@@ -38,6 +40,7 @@ class BottomNavigationLogic {
         );
         break;
       case 1:
+        AppMetrica.reportEvent('Click on "New post" button');
       // Действия при выборе создания поста
         Navigator.pushReplacement(
           context,
@@ -47,6 +50,7 @@ class BottomNavigationLogic {
         );
         break;
       case 2:
+        AppMetrica.reportEvent('Click on "Subscriptions" button');
       // Действия при выборе страницы подписок
         Navigator.pushReplacement(
           context,
@@ -64,6 +68,7 @@ class BottomNavigationLogic {
         );
         break;
       case 3:
+        AppMetrica.reportEvent('Click on "My profile" button');
         // Действия при выборе профиля
         Navigator.pushReplacement(
           context,

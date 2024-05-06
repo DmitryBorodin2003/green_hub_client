@@ -1,7 +1,10 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import '../post.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'comments.dart';
+import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
 
@@ -94,7 +97,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                           ),
                           SizedBox(height: 6),
                           InkWell(
-                            onTap: () {},
+                            onTap: () {
+                              AppMetrica.reportEvent('Click on "Subscribe" button');
+                            },
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                               decoration: BoxDecoration(
@@ -272,11 +277,15 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                     Row(
                                       children: [
                                         IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            AppMetrica.reportEvent('Click on "Like" button');
+                                          },
                                           icon: Icon(Icons.thumb_up),
                                         ),
                                         IconButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            AppMetrica.reportEvent('Click on "Dislike" button');
+                                          },
                                           icon: Icon(Icons.thumb_down),
                                         ),
                                       ],
@@ -285,22 +294,12 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                 ),
                                 IconButton(
                                   onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('Страница комментариев'),
-                                          content: Text('Здесь будет страница комментариев'),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Закрыть'),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                                    AppMetrica.reportEvent('Click on "Comments" button');
+                                    Navigator.push(
+                                      context,
+                                      CustomPageRoute(
+                                        page: Comments(),
+                                      ),
                                     );
                                   },
                                   icon: Icon(Icons.message),
