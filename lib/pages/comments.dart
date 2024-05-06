@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 
 import 'bottom_navigation_logic.dart';
@@ -82,6 +83,7 @@ class _CommentState extends State<Comments> {
                 SizedBox(width: 10),
                 IconButton(
                   onPressed: () {
+                    AppMetrica.reportEvent('Click on "Send comment" button');
                     // Действие при нажатии кнопки отправки комментария
                   },
                   icon: Icon(Icons.send, color: Colors.green),

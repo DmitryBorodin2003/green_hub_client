@@ -1,3 +1,4 @@
+import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import '../post.dart';
 import 'custom_page_route.dart';
@@ -104,6 +105,7 @@ class _LoginState extends State<Login> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    AppMetrica.reportEvent('Click on "Login" button');
                     _handleLogin();
                   },
                   style: ButtonStyle(
@@ -128,6 +130,7 @@ class _LoginState extends State<Login> {
                   ),
                   InkWell(
                     onTap: () {
+                      AppMetrica.reportEvent('Click on "login to register" button');
                       Navigator.pushReplacement(
                         context,
                         CustomPageRoute(page: Register()), // Перенаправление на страницу входа
