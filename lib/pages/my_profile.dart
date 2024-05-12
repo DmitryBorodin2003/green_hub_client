@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import '../achievement.dart';
 import '../author.dart';
 import '../post.dart';
 import '../publication_utils.dart';
@@ -26,6 +27,7 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   late TabController _tabController;
+  List<Achievement> achievements = [];
   List<Post> posts = []; // Создаем список постов и инициализируем его пустым списком
 
 
@@ -33,6 +35,33 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
+
+    getAchievements(widget.author).then((fetchedAchievements) {
+      // После получения постов обновляем состояние виджета
+      setState(() {
+        achievements = fetchedAchievements;
+      });
+    }).catchError((error) {
+      // Обрабатываем ошибку при получении достижений
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text(error.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+
     getPosts(widget.author).then((fetchedPosts) {
       // После получения постов обновляем состояние виджета
       setState(() {
@@ -61,10 +90,13 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Future<List<Post>> getPosts(Author author) async {
-    // Получаем ID пользователя из объекта автора
     int userId = author.userId;
-    var token = await TokenStorage.getToken();
-    return PublicationUtils.fetchPublications('http://46.19.66.10:8080/publications/user/$userId', token!, context);
+    return PublicationUtils.fetchPublications('http://46.19.66.10:8080/publications/user/$userId', context);
+  }
+
+  Future<List<Achievement>> getAchievements(Author author) async {
+    int userId = author.userId;
+    return PublicationUtils.getAchievements('http://46.19.66.10:8080/users/$userId/achievements');
   }
 
   @override
@@ -178,7 +210,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                   margin: EdgeInsets.fromLTRB(16, 10, 16, 0),
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Color(0xFFF5FFF3),
+                    color: Color(0xFFF5FFF3), // Цвет фона блока
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.grey.shade300, width: 1),
                   ),
@@ -199,51 +231,41 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                         thickness: 1,
                       ),
                       SizedBox(height: 15),
-                      Row(
-                        children: [
-                          Text(
-                            '🎉',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Лучший инфлюенсер',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
+                      ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: achievements.isNotEmpty ? achievements.length : 1, // Проверяем длину списка достижений
+                        itemBuilder: (context, index) {
+                          if (achievements.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'У пользователя нет достижений',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            );
+                          } else {
+                            return Row(
+                              children: [
+                                SizedBox(
+                                  width: 24, // Ширина изображения
+                                  height: 24, // Высота изображения
+                                  child: Image.memory(
+                                    base64.decode(achievements[index].image), // URL изображения
+                                    fit: BoxFit.cover, // Параметр fit для подгонки изображения
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  achievements[index].name, // Название достижения
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ],
+                            );
+                          }
+                        },
                       ),
-                      SizedBox(height: 15),
-                      Row(
-                        children: [
-                          Text(
-                            '🥸',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Топ-10 по адекватности',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 15),
-                      Row(
-                        children: [
-                          Text(
-                            '🐘',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Защитник животных',
-                            style: TextStyle(fontSize: 20),
-                          ),
-                        ],
-                      ),
+
                     ],
-
                   ),
-
                 ),
                 SizedBox(height: 8),
                 // Блок ленты с постами пользователя
@@ -504,8 +526,8 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                       shape: BoxShape.circle,
                       image: DecorationImage(
                         fit: BoxFit.cover,
-                        image: NetworkImage(
-                          'https://i.pinimg.com/originals/2b/64/2f/2b642f9183fa80b8c47a9d8f8971eb4d.jpg',
+                        image: MemoryImage(
+                          base64.decode(widget.author.userImage),
                         ),
                       ),
                     ),

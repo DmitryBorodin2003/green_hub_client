@@ -342,11 +342,10 @@ class _CreatePostState extends State {
       if (response.statusCode == 201) {
         // Обработка успешного запроса
         // Пример: переход на главный экран
-        var token = await TokenStorage.getToken();
         var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', token!, context);
+            'http://46.19.66.10:8080/publications', context);
         var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', token!, context);
+            'http://46.19.66.10:8080/publications/subscriptions', context);
         Navigator.pushReplacement(
           context,
           CustomPageRoute(

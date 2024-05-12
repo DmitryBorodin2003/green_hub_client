@@ -21,11 +21,10 @@ class BottomNavigationLogic {
       case 0:
         //Действия при выборе ленты
         AppMetrica.reportEvent('Click on "Lenta" button');
-        var token = await TokenStorage.getToken();
         var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', token!, context);
+            'http://46.19.66.10:8080/publications', context);
         var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', token!, context);
+            'http://46.19.66.10:8080/publications/subscriptions', context);
         Navigator.pushReplacement(
           context,
           CustomPageRoute(

@@ -7,10 +7,12 @@ import 'package:green_hub_client/post.dart';
 import 'package:green_hub_client/token_storage.dart';
 import 'package:http/http.dart' as http;
 
+import 'achievement.dart';
 import 'author.dart';
 
 class PublicationUtils {
-  static Future<List<Post>> fetchPublications(String url, String token, BuildContext context) async {
+  static Future<List<Post>> fetchPublications(String url, BuildContext context) async {
+    var token = await TokenStorage.getToken();
     try {
       var publicationsResponse = await http.get(
         Uri.parse(url),
@@ -182,7 +184,7 @@ class PublicationUtils {
       );
 
       if (response.statusCode == 200) {
-        var userData = json.decode(response.body);
+        var userData = json.decode(utf8.decode(response.bodyBytes));
         return Author.fromJson(userData);
       } else {
         // Обработка случая, когда ответ не 200 OK
@@ -222,6 +224,36 @@ class PublicationUtils {
     } catch (e) {
       // Обработка исключений
       print('Произошла ошибка: $e');
+    }
+  }
+
+  static Future<List<Achievement>> getAchievements(String url) async {
+    try {
+      var token = await TokenStorage.getToken();
+      var response = await http.get(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+          // Добавьте другие необходимые заголовки
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Обработка успешного ответа
+        List<dynamic> jsonList = json.decode(utf8.decode(response.bodyBytes));
+        List<Achievement> achievements = jsonList.map((json) => Achievement.fromJson(json)).toList();
+        return achievements;
+      } else {
+        // Обработка случая, когда ответ не 200 OK
+        print(response.statusCode);
+        print('Ошибка при выполнении запроса');
+        return []; // Возвращаем пустой список в случае ошибки
+      }
+    } catch (e) {
+      // Обработка исключений
+      print('Произошла ошибка: $e');
+      return []; // Возвращаем пустой список в случае ошибки
     }
   }
 
