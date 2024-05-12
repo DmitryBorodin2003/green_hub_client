@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import '../author.dart';
 import '../post.dart';
+import '../publication_utils.dart';
+import '../token_storage.dart';
+import '../user_credentials.dart';
 import 'custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
+import 'package:http/http.dart' as http;
 
 class Register extends StatefulWidget {
   const Register({Key? key});
@@ -14,6 +21,84 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   bool _isChecked = false;
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
+  void _handleRegister() async {
+    String name = _nameController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (_isChecked && name.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
+      UserCredentials().setUsername(name);
+      var url = Uri.parse('http://46.19.66.10:8080/registration');
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'username': name,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        var responseData = json.decode(response.body);
+        var token = responseData['token'];
+        await TokenStorage.saveToken(token);
+
+        var posts = await PublicationUtils.fetchPublications(
+            'http://46.19.66.10:8080/publications', token, context);
+        var personalposts = await PublicationUtils.fetchPublications(
+            'http://46.19.66.10:8080/publications/subscriptions', token, context);
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+              page: Lenta(posts: posts, personal_posts: personalposts,)),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ошибка'),
+              content: Text('Ошибка при входе'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text('Некорректный ввод'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +118,7 @@ class _RegisterState extends State<Register> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
+                controller: _nameController,
                 decoration: InputDecoration(
                   hintText: 'Имя',
                   hintStyle: TextStyle(
@@ -44,6 +130,7 @@ class _RegisterState extends State<Register> {
               ),
               SizedBox(height: 10),
               TextFormField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Email',
                   hintStyle: TextStyle(
@@ -55,6 +142,7 @@ class _RegisterState extends State<Register> {
               ),
               SizedBox(height: 10),
               TextFormField(
+                controller: _passwordController,
                 decoration: InputDecoration(
                   hintText: 'Пароль',
                   hintStyle: TextStyle(
@@ -128,30 +216,7 @@ class _RegisterState extends State<Register> {
                 child: ElevatedButton(
                   onPressed: () {
                     AppMetrica.reportEvent('Click on "Register" button');
-                    Navigator.pushReplacement(
-                      context,
-                      CustomPageRoute(page: Lenta(
-                          posts: [
-                            Post(
-                                content: 'Сегодня мы с командой убрали мусор на берегах водохранилища!',
-                                title: 'Отчет об уборке мусора',
-                                username: 'Грета',
-                                avatarUrl: 'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
-                                rating: 100,
-                                tags: ['#Уборка', '#Воронеж', '#Мусор'],
-                                imageUrl: 'https://vremenynet.ru/image_3814.png'),
-                            Post(
-                              content: 'Уличные животные тоже хотят еды и тепла. Пожалуйста, помогайте нам!',
-                              title: 'Не забывайте нас!',
-                              username: 'Мистер Кот',
-                              avatarUrl: 'https://static5.tgstat.ru/channels/_0/af/af18c25836a1cac48b3e857f96911013.jpg',
-                              rating: 200,
-                              tags: ['#Животные', '#Кот'],
-                            )
-                          ]
-                      )
-                      ), // Переход на экран ленты
-                    );
+                    _handleRegister();
                   },
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all(Colors.green),
