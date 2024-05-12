@@ -1,18 +1,24 @@
+import 'dart:convert';
+
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/publication_utils.dart';
+import '../author.dart';
 import '../post.dart';
+import '../token_storage.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
 import 'comments.dart';
 import 'custom_page_route.dart';
+import 'package:http/http.dart' as http;
 import 'lenta.dart';
 import 'login.dart';
 
 
 class NotMyProfile extends StatefulWidget {
-  final List<Post> posts; // Список постов
+  final Author author;
 
-  NotMyProfile({required this.posts});
+  NotMyProfile({required this.author});
 
   @override
   State<NotMyProfile> createState() => _NotMyProfileState();
@@ -20,15 +26,51 @@ class NotMyProfile extends StatefulWidget {
 
 class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMixin {
   late TabController _tabController;
+  List<Post> posts = []; // Создаем список постов и инициализируем его пустым списком
+  //TODO: подтягивать статус кнопки, может быть сразу True - попросить метод
+  bool isSubscribed = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
+    getPosts(widget.author).then((fetchedPosts) {
+      // После получения постов обновляем состояние виджета
+      setState(() {
+        posts = fetchedPosts;
+      });
+    }).catchError((error) {
+      // Обрабатываем ошибку при получении постов
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text(error.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+  }
+
+  Future<List<Post>> getPosts(Author author) async {
+    // Получаем ID пользователя из объекта автора
+    int userId = author.userId;
+    var token = await TokenStorage.getToken();
+    return PublicationUtils.fetchPublications('http://46.19.66.10:8080/publications/user/$userId', token!, context);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Color(0xFFDCFED7),
       body: ListView(
@@ -54,31 +96,18 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                         children: [
                           SizedBox(height: 10),
                           ClipOval(
-                            child: Image.network(
-                              'https://s0.rbk.ru/v6_top_pics/media/img/0/61/755695733019610.png',
+                            child: Image.memory(
+                              base64.decode(widget.author.userImage),
                               width: 120,
                               height: 120,
                               fit: BoxFit.cover,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(Icons.error);
-                              },
                             ),
                           ),
 
                           SizedBox(height: 8),
                           Text(
-                            'Грета',
-                            style: TextStyle(fontSize: 22),
+                            widget.author.username,
+                            style: TextStyle(fontSize: 16),
                           ),
                         ],
                       ),
@@ -98,17 +127,33 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                           SizedBox(height: 6),
                           InkWell(
                             onTap: () {
-                              AppMetrica.reportEvent('Click on "Subscribe" button');
+                              String url = isSubscribed ? 'http://46.19.66.10:8080/users/' + widget.author.userId.toString() + '/unsubscribe' : 'http://46.19.66.10:8080/users/' + widget.author.userId.toString() +'/subscribe';
+                              PublicationUtils.subscribeOrUnsubscribe(url);
+                              setState(() {
+                                isSubscribed = !isSubscribed;
+                                if (isSubscribed) {
+                                  AppMetrica.reportEvent('Click on "Subscribe" button');
+                                } else {
+                                  AppMetrica.reportEvent('Click on "Unsubscribe" button');
+                                }
+                              });
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF5fc16f),
+                                color: isSubscribed ? const Color(0xFFe74c3c) : const Color(0xFF5fc16f),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Row(
                                 children: [
-                                  Text('Подписаться', style: TextStyle(color: const Color(0xFF333333), fontFamily: 'Roboto', fontSize: 18)),
+                                  Text(
+                                    isSubscribed ? 'Отписаться' : 'Подписаться',
+                                    style: TextStyle(
+                                      color: const Color(0xFF333333),
+                                      fontFamily: 'Roboto',
+                                      fontSize: 18,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -180,11 +225,12 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                 SizedBox(height: 8),
                 // Блок ленты с постами пользователя
                 ListView.builder(
+
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
-                  itemCount: widget.posts.length,
+                  itemCount: posts.length,
                   itemBuilder: (context, index) {
-                    final post = widget.posts[index];
+                    final post = posts[index];
                     return Card(
                       color: Color(0xFFF5FFF3), // Цвет фона карточки поста
                       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -202,36 +248,17 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                               children: [
                                 Row(
                                   children: [
-                                    post.avatarUrl != null
-                                        ? ClipOval(
-                                      child: Image.network(
-                                        post.avatarUrl!,
+                                    ClipOval(
+                                      child: Image.memory(
+                                        base64.decode(post.author.userImage),
                                         width: 50,
                                         height: 50,
                                         fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Center(
-                                            child: CircularProgressIndicator(
-                                              value: loadingProgress.expectedTotalBytes != null
-                                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                                  : null,
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(Icons.error);
-                                        },
                                       ),
-                                    )
-                                        : CircleAvatar(
-                                      radius: 25,
-                                      backgroundColor: Colors.grey,
-                                      child: Text(post.username[0]),
                                     ),
                                     SizedBox(width: 8),
                                     Text(
-                                      post.username,
+                                      post.author.username,
                                       style: TextStyle(fontSize: 25),
                                     ),
                                     SizedBox(width: 8),
@@ -246,19 +273,19 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                             ),
                             SizedBox(height: 15),
                             Text(
-                              post.content,
+                              post.text,
                               style: TextStyle(fontSize: 18),
                             ),
                             SizedBox(height: 15),
-                            if (post.imageUrl != null)
+                            if ((post.image != null) && (post.image != ''))
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(7), // Применяем скругление углов
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(7), // Применяем скругление углов
-                                  child: Image.network(
-                                    post.imageUrl!,
+                                  child: Image.memory(
+                                    base64.decode(post.image!),
                                     fit: BoxFit.cover,
                                   ),
                                 ),

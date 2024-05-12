@@ -1,12 +1,14 @@
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/publication_utils.dart';
 
+import '../author.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
 
 class Subscriptions extends StatefulWidget {
-  final List<User> subscriptionList;
-  final List<User> followerList;
+  final List<Author> subscriptionList;
+  final List<Author> followerList;
 
   Subscriptions({
     required this.subscriptionList,
@@ -77,16 +79,35 @@ class _SubscriptionsPageState extends State<Subscriptions> with SingleTickerProv
   }
 }
 
-class SubscriptionsList extends StatelessWidget {
-  final List<User> users;
+class SubscriptionsList extends StatefulWidget {
+  final List<Author> users;
   final bool isSubscriptionList;
 
-  const SubscriptionsList({required this.users, required this.isSubscriptionList});
+  const SubscriptionsList({
+    required this.users,
+    required this.isSubscriptionList,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<SubscriptionsList> createState() => _SubscriptionsListState();
+}
+
+class _SubscriptionsListState extends State<SubscriptionsList> {
+
+  void _unsubscribeUser(int index) async {
+    AppMetrica.reportEvent('Click on "Unsubscribe" button');
+    PublicationUtils.subscribeOrUnsubscribe('http://46.19.66.10:8080/users/' + widget.users[index].userId.toString() + '/unsubscribe');
+    // Удалить пользователя из списка
+    setState(() {
+      widget.users.removeAt(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: users.length,
+      itemCount: widget.users.length,
       itemBuilder: (context, index) {
         return Container(
           decoration: BoxDecoration(
@@ -101,14 +122,12 @@ class SubscriptionsList extends StatelessWidget {
               // Например: backgroundImage: AssetImage('assets/avatar.jpg'),
             ),
             title: Text(
-              users[index].name,
+              widget.users[index].username,
               style: TextStyle(fontSize: 16), // Размер текста
             ),
-            trailing: isSubscriptionList
+            trailing: widget.isSubscriptionList
                 ? ElevatedButton(
-              onPressed: () {
-                AppMetrica.reportEvent('Click on "Unsubscribe" button');
-              },
+              onPressed: () => _unsubscribeUser(index),
               style: ElevatedButton.styleFrom(
                 primary: Colors.red, // Устанавливаем красный цвет кнопки
               ),

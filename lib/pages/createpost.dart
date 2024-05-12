@@ -1,9 +1,17 @@
+import 'dart:convert';
+
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../publication_utils.dart';
+import '../token_storage.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'package:http/http.dart' as http;
+
+import 'custom_page_route.dart';
+import 'lenta.dart';
 
 class Createpost extends StatefulWidget {
   @override
@@ -17,10 +25,10 @@ class _CreatePostState extends State {
   TextEditingController _textController = TextEditingController();
   List<String> _selectedTags = [];
   List<String> _availableTags = [
-    '#Воронеж',
-    '#Уборка',
-    '#Мусор',
-    '#Животные',
+    'Воронеж',
+    'Уборка',
+    'Мусор',
+    'Животные',
   ];
   // Добавьте здесь остальные теги по мере необходимости
   String _selectedTagsText = ''; // Поле для отображения выбранных тегов
@@ -60,7 +68,7 @@ class _CreatePostState extends State {
                     bool isSelected = _selectedTags.contains(tag);
                     return CheckboxListTile(
                       controlAffinity: ListTileControlAffinity.leading,
-                      title: Text(tag),
+                      title: Text('#$tag'),
                       value: isSelected,
                       onChanged: (bool? selected) {
                         setState(() {
@@ -103,7 +111,7 @@ class _CreatePostState extends State {
   // Функция для обработки нажатия на кнопку "Добавить"
   void _onAddButtonPressed() {
     AppMetrica.reportEvent('Click on "Add post" button');
-    // TODO: Действия при нажатии на кнопку "Добавить"
+    _postData();
   }
 
   @override
@@ -292,5 +300,65 @@ class _CreatePostState extends State {
         },
       ),
     );
+  }
+
+  Future<void> _postData() async {
+    try {
+      var token = await TokenStorage.getToken();
+      print(token);
+
+      // Создаем новый запрос типа MultipartRequest
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://46.19.66.10:8080/publications'),
+      );
+
+      // Добавляем заголовок Authorization с токеном
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Добавляем поля данных в форму
+      request.fields['title'] = _titleController.text;
+      request.fields['text'] = _textController.text;
+      request.fields['tags'] = _selectedTags.join(',');
+
+      //TODO: КАРТИНКА
+      // Добавляем изображение
+      // if (_imageFile != null) {
+      //   request.files.add(
+      //     await http.MultipartFile.fromPath(
+      //       'image', // Имя поля
+      //       _imageFile!.path, // Путь к файлу
+      //     ),
+      //   );
+      // }
+
+      // Отправляем запрос и ждем ответа
+      var streamedResponse = await request.send();
+
+      // Принимаем ответ
+      var response = await http.Response.fromStream(streamedResponse);
+
+      // Проверяем успешность запроса
+      if (response.statusCode == 201) {
+        // Обработка успешного запроса
+        // Пример: переход на главный экран
+        var token = await TokenStorage.getToken();
+        var posts = await PublicationUtils.fetchPublications(
+            'http://46.19.66.10:8080/publications', token!, context);
+        var personalposts = await PublicationUtils.fetchPublications(
+            'http://46.19.66.10:8080/publications/subscriptions', token!, context);
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+              page: Lenta(posts: posts, personal_posts: personalposts,)),
+        );
+      } else {
+        // Обработка ошибки при отправке данных
+        print('Ошибка при отправке данных: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Обработка исключений
+      print('Произошла ошибка: $e');
+    }
   }
 }
