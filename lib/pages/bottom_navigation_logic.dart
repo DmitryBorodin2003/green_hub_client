@@ -66,6 +66,7 @@ class BottomNavigationLogic {
               context,
               CustomPageRoute(page: Profile(author: author)),
             );
+            print(author.userId);
           } else {
             // Обработка случая, когда пользователь не найден или произошла ошибка
             print('Пользователь с таким именем не найден');

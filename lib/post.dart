@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'author.dart';
 
 class Post {
@@ -10,6 +12,8 @@ class Post {
   final int id;
   String reactionType;
   bool hidden;
+  Uint8List? decodedImage;
+  Uint8List? decodedAvatar;
 
   Post({
     required this.id,
@@ -21,5 +25,7 @@ class Post {
     required this.tags,
     this.reactionType = 'null',
     this.hidden = false, // По умолчанию пост не скрыт
+    this.decodedImage,
+    this.decodedAvatar,
   });
 }

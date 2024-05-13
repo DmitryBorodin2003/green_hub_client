@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/publication_utils.dart';
@@ -118,8 +120,7 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
           margin: EdgeInsets.all(8), // Добавляем отступы между элементами списка
           child: ListTile(
             leading: CircleAvatar(
-              // Здесь должна быть логика для загрузки аватара
-              // Например: backgroundImage: AssetImage('assets/avatar.jpg'),
+              backgroundImage: MemoryImage(base64Decode(widget.users[index].userImage)),
             ),
             title: Text(
               widget.users[index].username,

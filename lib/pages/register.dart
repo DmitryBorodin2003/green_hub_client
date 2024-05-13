@@ -165,48 +165,52 @@ class _RegisterState extends State<Register> {
                       });
                     },
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Поставив галочку, вы соглашаетесь с ',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'Roboto',
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          AppMetrica.reportEvent('Click on "Terms of use" button');
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text("Пользовательское соглашение"),
-                                content: Text("Поставьте галочку пж"),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      // Действие при нажатии на кнопку "Закрыть"
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("Закрыть"),
-                                  ),
-                                ],
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Поставив галочку, вы соглашаетесь с ',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: 'Roboto',
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              AppMetrica.reportEvent('Click on "Terms of use" button');
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("Пользовательское соглашение"),
+                                    content: Text("Поставьте галочку, пожалуйста."),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          // Действие при нажатии на кнопку "Закрыть"
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text("Закрыть"),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-
-                        child: Text(
-                          'Пользовательским соглашением',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontFamily: 'Roboto',
+                            child: Text(
+                              'Пользовательским соглашением',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontFamily: 'Roboto',
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -229,33 +233,35 @@ class _RegisterState extends State<Register> {
                 ),
               ),
               SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Уже зарегистрированы? ',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      AppMetrica.reportEvent('Click on "register to login" button');
-                      Navigator.pushReplacement(
-                        context,
-                        CustomPageRoute(page: Login()),
-                      );
-                    },
-                    child: Text(
-                      'Войти',
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Text(
+                      'Уже зарегистрированы? ',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: Colors.black,
                         fontFamily: 'Roboto',
                       ),
                     ),
-                  ),
-                ],
+                    InkWell(
+                      onTap: () {
+                        AppMetrica.reportEvent('Click on "register to login" button');
+                        Navigator.pushReplacement(
+                          context,
+                          CustomPageRoute(page: Login()),
+                        );
+                      },
+                      child: Text(
+                        'Войти',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontFamily: 'Roboto',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

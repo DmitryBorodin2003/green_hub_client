@@ -145,13 +145,16 @@ class _LoginState extends State<Login> {
                 ),
               ),
               SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center, // Выравнивание элементов по центру
                 children: [
-                  Text(
-                    'Новый пользователь? ',
-                    style: TextStyle(
-                      color: Colors.black,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Новый пользователь? ',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -162,10 +165,13 @@ class _LoginState extends State<Login> {
                         CustomPageRoute(page: Register()), // Перенаправление на страницу входа
                       );
                     },
-                    child: Text(
-                      'Зарегистрироваться',
-                      style: TextStyle(
-                        color: Colors.green,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Зарегистрироваться',
+                        style: TextStyle(
+                          color: Colors.green,
+                        ),
                       ),
                     ),
                   ),

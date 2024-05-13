@@ -26,18 +26,19 @@ class _CreatePostState extends State {
   List<String> _selectedTags = [];
   List<String> _availableTags = [
     'Воронеж',
-    'Уборка',
     'Мусор',
-    'Животные',
   ];
   // Добавьте здесь остальные теги по мере необходимости
   String _selectedTagsText = ''; // Поле для отображения выбранных тегов
+  XFile? _pickedImage; // Переменная для хранения выбранного изображения
 
   // Функция для открытия галереи и выбора изображения
   Future<void> _pickImageFromGallery() async {
-    final pickedImage = await ImagePicker().getImage(source: ImageSource.gallery);
+    final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedImage != null) {
-      // TODO: Действия с выбранным изображением
+      setState(() {
+        _pickedImage = pickedImage;
+      });
     }
   }
 
@@ -109,9 +110,28 @@ class _CreatePostState extends State {
   }
 
   // Функция для обработки нажатия на кнопку "Добавить"
-  void _onAddButtonPressed() {
+  Future<void> _onAddButtonPressed() async {
     AppMetrica.reportEvent('Click on "Add post" button');
-    _postData();
+    var code;
+    if (_pickedImage != null) {
+      code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
+    } else {
+      code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
+    }
+    if (code == 201) {
+      var posts = await PublicationUtils.fetchPublications(
+          'http://46.19.66.10:8080/publications', context);
+      var personalposts = await PublicationUtils.fetchPublications(
+          'http://46.19.66.10:8080/publications/subscriptions', context);
+      Navigator.pushReplacement(
+        context,
+        CustomPageRoute(
+            page: Lenta(posts: posts, personal_posts: personalposts,)),
+      );
+    } else {
+      // Обработка ошибки при отправке данных
+      print('Ошибка при отправке данных:');
+    }
   }
 
   @override
@@ -211,20 +231,20 @@ class _CreatePostState extends State {
                     ),
                     SizedBox(height: 10.0),
                     GestureDetector(
-                      onTap: _pickImageFromGallery, // Вызываем функцию для открытия галереи
+                      onTap: _pickImageFromGallery,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey), // Добавляем серую обводку
+                          border: Border.all(color: Colors.grey),
                         ),
                         alignment: Alignment.center,
                         child: TextField(
-                          enabled: false, // Отключаем возможность редактирования
+                          enabled: false,
                           decoration: InputDecoration(
-                            hintText: '📎 Загрузить фото',
+                            hintText: _pickedImage != null ? _pickedImage!.name : '📎 Загрузить фото',
                             contentPadding: EdgeInsets.all(10.0),
-                            border: InputBorder.none, // Убираем внутреннюю обводку
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
@@ -300,64 +320,5 @@ class _CreatePostState extends State {
         },
       ),
     );
-  }
-
-  Future<void> _postData() async {
-    try {
-      var token = await TokenStorage.getToken();
-      print(token);
-
-      // Создаем новый запрос типа MultipartRequest
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('http://46.19.66.10:8080/publications'),
-      );
-
-      // Добавляем заголовок Authorization с токеном
-      request.headers['Authorization'] = 'Bearer $token';
-
-      // Добавляем поля данных в форму
-      request.fields['title'] = _titleController.text;
-      request.fields['text'] = _textController.text;
-      request.fields['tags'] = _selectedTags.join(',');
-
-      //TODO: КАРТИНКА
-      // Добавляем изображение
-      // if (_imageFile != null) {
-      //   request.files.add(
-      //     await http.MultipartFile.fromPath(
-      //       'image', // Имя поля
-      //       _imageFile!.path, // Путь к файлу
-      //     ),
-      //   );
-      // }
-
-      // Отправляем запрос и ждем ответа
-      var streamedResponse = await request.send();
-
-      // Принимаем ответ
-      var response = await http.Response.fromStream(streamedResponse);
-
-      // Проверяем успешность запроса
-      if (response.statusCode == 201) {
-        // Обработка успешного запроса
-        // Пример: переход на главный экран
-        var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', context);
-        var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', context);
-        Navigator.pushReplacement(
-          context,
-          CustomPageRoute(
-              page: Lenta(posts: posts, personal_posts: personalposts,)),
-        );
-      } else {
-        // Обработка ошибки при отправке данных
-        print('Ошибка при отправке данных: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Обработка исключений
-      print('Произошла ошибка: $e');
-    }
   }
 }

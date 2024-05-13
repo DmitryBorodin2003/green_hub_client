@@ -1,15 +1,16 @@
 // publication_utils.dart
 
 import 'dart:convert';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/post.dart';
 import 'package:green_hub_client/comment.dart';
 import 'package:green_hub_client/token_storage.dart';
 import 'package:http/http.dart' as http;
-
 import 'achievement.dart';
 import 'author.dart';
+import 'package:image_picker/image_picker.dart';
+
 
 class PublicationUtils {
   static Future<List<Post>> fetchPublications(String url, BuildContext context) async {
@@ -329,7 +330,7 @@ class PublicationUtils {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> responseData = json.decode(response.body)['content'];
+      final List<dynamic> responseData = json.decode(utf8.decode(response.bodyBytes))['content'];
       return responseData.map((json) => Comment.fromJson(json)).toList();
     } else {
       throw Exception('Ошибка при загрузке комментариев');
@@ -358,6 +359,108 @@ class PublicationUtils {
       return;
     } else {
       throw Exception('Ошибка при отправке комментария');
+    }
+  }
+
+  static Future<void> setImageAndEmail(int userId, XFile image, String email) async {
+    var token = await TokenStorage.getToken();
+
+    var request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('http://46.19.66.10:8080/users/$userId'),
+    );
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.fields['email'] = email;
+
+    final bytes = await image.readAsBytes();
+    final multipartFile = http.MultipartFile.fromBytes(
+      'image',
+      bytes,
+      filename: image.name,
+    );
+    request.files.add(multipartFile);
+
+    // Отправка PATCH запроса
+    var streamedResponse = await request.send();
+    print(streamedResponse.statusCode);
+  }
+
+  static Future<void> setEmail(int userId, String email) async {
+    var token = await TokenStorage.getToken();
+
+    var request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('http://46.19.66.10:8080/users/$userId'),
+    );
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.fields['email'] = email;
+
+    // Отправка PATCH запроса
+    var streamedResponse = await request.send();
+    print(streamedResponse.statusCode);
+  }
+
+
+  static Future<int> postData(String title, String text, List<String> tags, XFile pickedImage) async {
+    try {
+      var token = await TokenStorage.getToken();
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://46.19.66.10:8080/publications'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+
+      request.fields['title'] = title;
+      request.fields['text'] = text;
+      request.fields['tags'] = tags.join(',');
+
+      final bytes = await pickedImage.readAsBytes();
+      final multipartFile = http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: pickedImage.name,
+      );
+      request.files.add(multipartFile);
+
+      var streamedResponse = await request.send();
+
+      var response = await http.Response.fromStream(streamedResponse);
+
+      return response.statusCode;
+    } catch (e) {
+      print('An error occurred: $e');
+      return -1; // Возврат -1 в случае ошибки
+    }
+  }
+
+  static Future<int> postDataWithoutPicture(String title, String text, List<String> tags) async {
+    try {
+      var token = await TokenStorage.getToken();
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://46.19.66.10:8080/publications'),
+      );
+
+      request.headers['Authorization'] = 'Bearer $token';
+
+      request.fields['title'] = title;
+      request.fields['text'] = text;
+      request.fields['tags'] = tags.join(',');
+
+      var streamedResponse = await request.send();
+
+      var response = await http.Response.fromStream(streamedResponse);
+
+      return response.statusCode;
+    } catch (e) {
+      print('An error occurred: $e');
+      return -1; // Возврат -1 в случае ошибки
     }
   }
 

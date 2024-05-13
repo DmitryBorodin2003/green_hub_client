@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'login.dart';
 
 class NotMyProfile extends StatefulWidget {
   final Author author;
+  Uint8List? decodedAvatar;
 
   NotMyProfile({required this.author});
 
@@ -67,6 +69,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
       // После получения постов обновляем состояние виджета
       setState(() {
         posts = fetchedPosts;
+        decodeImages();
       });
     }).catchError((error) {
       // Обрабатываем ошибку при получении постов
@@ -88,6 +91,14 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
         },
       );
     });
+  }
+
+  // Предварительно декодировать изображения при загрузке постов
+  void decodeImages() {
+    widget.decodedAvatar = base64.decode(widget.author.userImage);
+    for (var post in posts) {
+      post.decodedImage = base64.decode(post.image!);
+    }
   }
 
   Future<List<Post>> getPosts(Author author) async {
@@ -127,33 +138,41 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                         children: [
                           SizedBox(height: 10),
                           ClipOval(
-                            child: Image.memory(
-                              base64.decode(widget.author.userImage),
-                              width: 120,
-                              height: 120,
+                            child: widget.decodedAvatar != null
+                                ? Image.memory(
+                              widget.decodedAvatar!,
+                              width: 90,
+                              height: 90,
                               fit: BoxFit.cover,
-                            ),
+                            )
+                                : SizedBox(), // Если decodedAvatar равен null, отображается пустой контейнер
                           ),
 
                           SizedBox(height: 8),
                           Text(
                             widget.author.username,
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 20),
                           ),
                         ],
                       ),
-                      SizedBox(width: 16),
+                      SizedBox(width: 10),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Подписок: 12',
-                            style: TextStyle(color: const Color(0xFF4c4c4c), fontFamily: 'Roboto', fontSize: 20),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Подписок: ' + widget.author.subscriptionsCount.toString(),
+                              style: TextStyle(color: const Color(0xFF4c4c4c), fontFamily: 'Roboto', fontSize: 20),
+                            ),
                           ),
                           SizedBox(height: 4),
-                          Text(
-                            'Подписчиков: 100',
-                            style: TextStyle(color: const Color(0xFF4c4c4c), fontFamily: 'Roboto', fontSize: 20),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Подписчиков: ' + widget.author.subscribersCount.toString(),
+                              style: TextStyle(color: const Color(0xFF4c4c4c), fontFamily: 'Roboto', fontSize: 20),
+                            ),
                           ),
                           SizedBox(height: 6),
                           InkWell(
@@ -164,8 +183,10 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                 isSubscribed = !isSubscribed;
                                 if (isSubscribed) {
                                   AppMetrica.reportEvent('Click on "Subscribe" button');
+                                  widget.author.subscribersCount = widget.author.subscribersCount! + 1;
                                 } else {
                                   AppMetrica.reportEvent('Click on "Unsubscribe" button');
+                                  widget.author.subscribersCount = widget.author.subscribersCount! - 1;
                                 }
                               });
                             },
@@ -285,7 +306,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                   children: [
                                     ClipOval(
                                       child: Image.memory(
-                                        base64.decode(post.author.userImage),
+                                        widget.decodedAvatar!,
                                         width: 50,
                                         height: 50,
                                         fit: BoxFit.cover,
@@ -320,7 +341,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(7), // Применяем скругление углов
                                   child: Image.memory(
-                                    base64.decode(post.image!),
+                                    post.decodedImage!,
                                     fit: BoxFit.cover,
                                   ),
                                 ),

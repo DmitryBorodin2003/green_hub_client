@@ -42,6 +42,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     _tabController = TabController(length: 2, vsync: this);
     _tabController.index = 0; // Устанавливаем активную вкладку по умолчанию
     selectedOptionIndex = 0; // При инициализации выбора нет
+    decodeImages();
     _sortPosts();
   }
 
@@ -54,6 +55,17 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     return null; // Возвращаем null, если пост не найден
   }
 
+  // Предварительно декодировать изображения при загрузке постов
+  void decodeImages() {
+    for (var post in widget.posts) {
+      post.decodedAvatar = base64.decode(post.author.userImage);
+      post.decodedImage = base64.decode(post.image!);
+    }
+    for (var post in widget.personal_posts) {
+      post.decodedAvatar = base64.decode(post.author.userImage);
+      post.decodedImage = base64.decode(post.image!);
+    }
+  }
 
   Future<void> _showTagSelectionDialog() async {
     return showDialog(
@@ -277,112 +289,123 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFDCFED7), // Цвет фона
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Color(0xFFDCFED7), // Цвет фона апп-бара
-        toolbarHeight: 125, // Увеличиваем высоту апп-бара
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(top: 16), // Добавляем отступ сверху
-              child: Row(
-                children: [
-                  SizedBox(
-                    height: 60, // Уменьшаем высоту логотипа
-                    child: Image.asset(
-                      'assets/logofullhorizontal2.png',
-                      height: 20, // Уменьшаем размер логотипа
-                    ),
-                  ),
-                  SizedBox(width: 30), // Промежуток между логотипом и кнопками
-                  IconButton(
-                    icon: Icon(Icons.arrow_upward), // Значок стрелочки
-                    onPressed: () {
-                      AppMetrica.reportEvent('Click on "Sort" button');
-                      _showSortOptionsDialog();
-                    },
-                    color: Colors.black, // Устанавливаем цвет иконки
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.filter_list), // Значок фильтра
-                    onPressed: () {
-                      AppMetrica.reportEvent('Click on "Filter" button');
-                      _showTagSelectionDialog();
-                    },
-                    color: Colors.black, // Устанавливаем цвет иконки
-                  ),
-                ],
-              ),
-            ),
-            TabBar(
-              controller: _tabController,
-              tabs: [
-                Tab(
-                  child: Text(
-                    'Лента',
-                    style: TextStyle(
-                      fontSize: 25, // Увеличиваем размер текста
-                    ),
-                  ),
-                ),
-                Tab(
-                  child: Text(
-                    'Подписки',
-                    style: TextStyle(
-                      fontSize: 25, // Увеличиваем размер текста
-                    ),
-                  ),
-                ),
-              ],
-              indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(
-                    width: 2.0, color: Colors.green), // Зелёное подчёркивание
-              ),
-              labelColor: Colors.black,
-              labelStyle: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // Содержимое для вкладки "Лента"
-          ListView.builder(
-            itemCount: widget.posts.length,
-            itemBuilder: (context, index) {
-              final post = widget.posts[index];
-              return buildPostCard(context, widget.posts, post, index);
-            },
-          ),
+    return DefaultTabController(
+     length: 2,
+     child: Scaffold(
+       backgroundColor: Color(0xFFDCFED7), // Цвет фона
+       appBar: AppBar(
+         automaticallyImplyLeading: false,
+         backgroundColor: Color(0xFFDCFED7), // Цвет фона апп-бара
+         toolbarHeight: 125, // Увеличиваем высоту апп-бара
+         title: Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             Padding(
+               padding: EdgeInsets.only(top: 16), // Добавляем отступ сверху
+               child: Row(
+                 children: [
+                   SizedBox(
+                     height: 60, // Уменьшаем высоту логотипа
+                     child: Image.asset(
+                       'assets/logofullhorizontal2.png',
+                       height: 20, // Уменьшаем размер логотипа
+                     ),
+                   ),
+                   Spacer(), // Промежуток между логотипом и кнопками
+                   IconButton(
+                     icon: Icon(Icons.arrow_upward), // Значок стрелочки
+                     onPressed: () {
+                       AppMetrica.reportEvent('Click on "Sort" button');
+                       _showSortOptionsDialog();
+                     },
+                     color: Colors.black, // Устанавливаем цвет иконки
+                   ),
+                   IconButton(
+                     icon: Icon(Icons.filter_list), // Значок фильтра
+                     onPressed: () {
+                       AppMetrica.reportEvent('Click on "Filter" button');
+                       _showTagSelectionDialog();
+                     },
+                     color: Colors.black, // Устанавливаем цвет иконки
+                   ),
+                 ],
+               ),
+             ),
+             TabBar(
+               controller: _tabController,
+               tabs: [
+                 Tab(
+                   child: FittedBox(
+                     fit: BoxFit.scaleDown,
+                     child: Text(
+                       'Лента',
+                       style: TextStyle(
+                         fontSize: 25,
+                       ),
+                     ),
+                   ),
+                 ),
+                 Tab(
+                   child: FittedBox(
+                     fit: BoxFit.scaleDown,
+                     child: Text(
+                       'Подписки',
+                       style: TextStyle(
+                         fontSize: 25,
+                       ),
+                     ),
+                   ),
+                 ),
+               ],
+               indicator: UnderlineTabIndicator(
+                 borderSide: BorderSide(
+                     width: 2.0, color: Colors.green), // Зелёное подчёркивание
+               ),
+               labelColor: Colors.black,
+               labelStyle: TextStyle(fontSize: 16),
+             ),
+           ],
+         ),
+       ),
+       body: TabBarView(
+         controller: _tabController,
+         children: [
+           // Содержимое для вкладки "Лента"
+           ListView.builder(
+             itemCount: widget.posts.length,
+             itemBuilder: (context, index) {
+               final post = widget.posts[index];
+               return buildPostCard(context, widget.posts, post, index, Key('${post.id}_$index'),);
 
-          // Содержимое для вкладки "Подписки"
-          ListView.builder(
-            itemCount: widget.personal_posts.length,
-            itemBuilder: (context, index) {
-              final post = widget.personal_posts[index];
-              return buildPostCard(context, widget.personal_posts, post, index);
-            },
-          ),
-        ],
-      ),
+             },
+           ),
 
-      bottomNavigationBar: CustomBottomNavigationBar(
-        onTap: (index) {
-          BottomNavigationLogic.handleNavigation(context, index);
-        },
-      ),
+           // Содержимое для вкладки "Подписки"
+           ListView.builder(
+             itemCount: widget.personal_posts.length,
+             itemBuilder: (context, index) {
+               final post = widget.personal_posts[index];
+               return buildPostCard(context, widget.personal_posts, post, index, Key('${post.id}_$index'),);
+             },
+           ),
+         ],
+       ),
+
+       bottomNavigationBar: CustomBottomNavigationBar(
+         onTap: (index) {
+           BottomNavigationLogic.handleNavigation(context, index);
+         },
+       ),
+     ),
     );
   }
 
-  Widget buildPostCard(BuildContext context, List<Post> array, Post post, int index) {
+  Widget buildPostCard(BuildContext context, List<Post> array, Post post, int index, Key key) {
     if (post.hidden) {
       return SizedBox.shrink();
     }
     return Card(
+      key: key,
       color: const Color(0xFFf5fff3),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       shape: RoundedRectangleBorder(
@@ -404,7 +427,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   },
                   child: ClipOval(
                     child: Image.memory(
-                      base64.decode(post.author.userImage),
+                      post.decodedAvatar!,
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
@@ -438,7 +461,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 15),
-            if ((post.image != null) && (post.image != ''))
+            if ((post.image != null) && (post.image != '') && (post.decodedImage != null))
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(7),
@@ -446,7 +469,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(7),
                   child: Image.memory(
-                    base64.decode(post.image!),
+                    post.decodedImage!,
                     fit: BoxFit.cover,
                   ),
                 ),

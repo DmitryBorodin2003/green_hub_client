@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/login.dart';
+import 'package:green_hub_client/pages/register.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
