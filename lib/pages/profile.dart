@@ -340,15 +340,31 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                       children: [
                                         IconButton(
                                           onPressed: () {
-                                            AppMetrica.reportEvent('Click on "Like" button');
+                                            AppMetrica.reportEvent(
+                                                'Click on "Like" button');
+                                            handleReaction(post, 'LIKE');
+                                            setState(() {
+                                              posts[index] = post;
+                                            });
                                           },
-                                          icon: Icon(Icons.thumb_up),
+                                          icon: Icon(
+                                            Icons.thumb_up,
+                                            color: post.reactionType == 'LIKE' ? Colors.blue : Colors.black,
+                                          ),
                                         ),
                                         IconButton(
                                           onPressed: () {
-                                            AppMetrica.reportEvent('Click on "Dislike" button');
+                                            AppMetrica.reportEvent(
+                                                'Click on "Dislike" button');
+                                            handleReaction(post, 'DISLIKE');
+                                            setState(() {
+                                              posts[index] = post;
+                                            });
                                           },
-                                          icon: Icon(Icons.thumb_down),
+                                          icon: Icon(
+                                            Icons.thumb_down,
+                                            color: post.reactionType == 'DISLIKE' ? Colors.blue : Colors.black,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -405,5 +421,39 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
         },
       ),
     );
+  }
+
+  void handleReaction(Post post, String reactionType) {
+    //TODO: check 201 status
+    switch (reactionType) {
+      case 'LIKE':
+        if (post.reactionType == 'DISLIKE') {
+          post.rating += 2;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'null') {
+          post.rating += 1;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'LIKE') {
+          post.rating -= 1;
+          post.reactionType = 'null';
+        }
+        break;
+      case 'DISLIKE':
+        if (post.reactionType == 'LIKE') {
+          post.rating -= 2;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'null') {
+          post.rating -= 1;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'DISLIKE') {
+          post.rating += 1;
+          post.reactionType = 'null';
+        }
+        break;
+      default:
+      // Действия, если reactionType не равно 'LIKE' или 'DISLIKE'
+        break;
+    }
+    PublicationUtils.sendReaction(post.id, reactionType);
   }
 }
