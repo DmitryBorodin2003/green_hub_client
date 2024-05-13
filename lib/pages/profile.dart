@@ -360,7 +360,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                     Navigator.push(
                                       context,
                                       CustomPageRoute(
-                                        page: Comments(),
+                                        page: Comments(postId: post.id,),
                                       ),
                                     );
                                   },

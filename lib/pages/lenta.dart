@@ -19,6 +19,7 @@ import 'my_profile.dart';
 class Lenta extends StatefulWidget {
   final List<Post> posts; // Список постов
   final List<Post> personal_posts;
+  Null array;
 
   Lenta({required this.posts, required this.personal_posts});
 
@@ -43,6 +44,15 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     _tabController = TabController(length: 2, vsync: this);
     _tabController.index = 0; // Устанавливаем активную вкладку по умолчанию
     selectedOptionIndex = 0; // При инициализации выбора нет
+  }
+
+  int? findPostIndex(Post post, List<Post> postList) {
+    for (int i = 0; i < postList.length; i++) {
+      if (postList[i].id == post.id) {
+        return i;
+      }
+    }
+    return null; // Возвращаем null, если пост не найден
   }
 
   Future<void> _showTagSelectionDialog() async {
@@ -289,7 +299,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
             itemCount: widget.posts.length,
             itemBuilder: (context, index) {
               final post = widget.posts[index];
-              return buildPostCard(context, post, index);
+              return buildPostCard(context, widget.posts, post, index);
             },
           ),
 
@@ -298,7 +308,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
             itemCount: widget.personal_posts.length,
             itemBuilder: (context, index) {
               final post = widget.personal_posts[index];
-              return buildPostCard(context, post, index);
+              return buildPostCard(context, widget.personal_posts, post, index);
             },
           ),
         ],
@@ -312,7 +322,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     );
   }
 
-  Widget buildPostCard(BuildContext context, Post post, int index) {
+  Widget buildPostCard(BuildContext context, List<Post> array, Post post, int index) {
     return Card(
       color: const Color(0xFFf5fff3),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -331,7 +341,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   onTap: () {
                     AppMetrica.reportEvent(
                         'Click on "Not my profile" button');
-                    fetchDataAndNavigate(context, index);
+                    fetchDataAndNavigate(context, array, index);
                   },
                   child: ClipOval(
                     child: Image.memory(
@@ -347,7 +357,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   onTap: () {
                     AppMetrica.reportEvent(
                         'Click on "Not my profile" button');
-                    fetchDataAndNavigate(context, index);
+                    fetchDataAndNavigate(context, array, index);
                   },
                   child: Text(
                     post.author.username,
@@ -399,15 +409,52 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                           onPressed: () {
                             AppMetrica.reportEvent(
                                 'Click on "Like" button');
+                            var arr;
+                            if (array == widget.posts) {
+                              arr = widget.personal_posts;
+                            }
+                            else if (array == widget.personal_posts) {
+                              arr = widget.posts;
+                            } else arr = null;
+                            var x = findPostIndex(post, arr);
+
+                            handleReaction(post, 'LIKE');
+                            setState(() {
+                              array[index] = post;
+                              if ((arr != null) && (x != null)) {
+                                arr[x] = post;
+                              }
+                            });
                           },
-                          icon: Icon(Icons.thumb_up),
+                          icon: Icon(
+                            Icons.thumb_up,
+                            color: post.reactionType == 'LIKE' ? Colors.blue : Colors.black,
+                          ),
                         ),
                         IconButton(
                           onPressed: () {
                             AppMetrica.reportEvent(
                                 'Click on "Dislike" button');
+                            var arr;
+                            if (array == widget.posts) {
+                              arr = widget.personal_posts;
+                            }
+                            else if (array == widget.personal_posts) {
+                              arr = widget.posts;
+                            } else arr = null;
+                            var x = findPostIndex(post, arr);
+                            handleReaction(post, 'DISLIKE');
+                            setState(() {
+                              array[index] = post;
+                              if ((arr != null) && (x != null)) {
+                                arr[x] = post;
+                              }
+                            });
                           },
-                          icon: Icon(Icons.thumb_down),
+                          icon: Icon(
+                            Icons.thumb_down,
+                            color: post.reactionType == 'DISLIKE' ? Colors.blue : Colors.black,
+                          ),
                         ),
                       ],
                     ),
@@ -420,7 +467,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                     Navigator.push(
                       context,
                       CustomPageRoute(
-                        page: Comments(),
+                        page: Comments(postId: post.id,),
                       ),
                     );
                   },
@@ -452,9 +499,48 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     );
   }
 
-  Future<void> fetchDataAndNavigate(BuildContext context, int index) async {
+  void handleReaction(Post post, String reactionType) {
+    //TODO: check 201 status
+    switch (reactionType) {
+      case 'LIKE':
+        if (post.reactionType == 'DISLIKE') {
+          post.rating += 2;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'null') {
+          post.rating += 1;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'LIKE') {
+          post.rating -= 1;
+          post.reactionType = 'null';
+        }
+        break;
+      case 'DISLIKE':
+        if (post.reactionType == 'LIKE') {
+          post.rating -= 2;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'null') {
+          post.rating -= 1;
+          post.reactionType = reactionType;
+        } else if (post.reactionType == 'DISLIKE') {
+          post.rating += 1;
+          post.reactionType = 'null';
+        }
+        break;
+      default:
+      // Действия, если reactionType не равно 'LIKE' или 'DISLIKE'
+        break;
+    }
+    if (post.reactionType != 'null') {
+      PublicationUtils.sendReaction(post.id, reactionType);
+    } else {
+      PublicationUtils.deleteReaction(post.id);
+    }
+
+  }
+
+  Future<void> fetchDataAndNavigate(BuildContext context, List<Post> array, int index) async {
     try {
-      Author? author = await PublicationUtils.fetchAuthorByUsername(widget.posts[index].author.username);
+      Author? author = await PublicationUtils.fetchAuthorByUsername(array[index].author.username);
       if (author != null) {
         if (author.username != UserCredentials().username) {
           Navigator.pushReplacement(

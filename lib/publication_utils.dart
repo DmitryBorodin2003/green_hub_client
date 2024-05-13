@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/post.dart';
+import 'package:green_hub_client/comment.dart';
 import 'package:green_hub_client/token_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -35,8 +36,10 @@ class PublicationUtils {
 
           // Добавляем проверку на null для поля image
           String? imageUrl = publication['image'] != null ? publication['image'] : null;
+          String reactionType = publication['reactionType'] ?? 'null'; // Если значение reactionType null, то присваиваем пустую строку
 
           Post post = Post(
+            reactionType: reactionType,
             id: publication['id'],
             text: publication['text'],
             title: publication['title'],
@@ -254,6 +257,107 @@ class PublicationUtils {
       // Обработка исключений
       print('Произошла ошибка: $e');
       return []; // Возвращаем пустой список в случае ошибки
+    }
+  }
+
+  static Future<void> sendReaction(int postId, String reactionType) async {
+    String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
+    var token = await TokenStorage.getToken();
+
+    String requestBodyJson = json.encode({
+      'reactionType': reactionType,
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: requestBodyJson,
+      );
+
+      // Проверяем статус ответа
+      if (response.statusCode == 201) {
+        // Успешно отправлено
+        print('Реакция успешно отправлена');
+      } else {
+        // Ошибка при отправке запроса
+        print('Ошибка при отправке реакции: ${response.reasonPhrase}');
+      }
+    } catch (error) {
+      print('Ошибка при отправке запроса: $error');
+    }
+  }
+
+  static Future<void> deleteReaction(int postId) async {
+    String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
+    var token = await TokenStorage.getToken();
+
+    try {
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      // Проверяем статус ответа
+      if (response.statusCode == 204) {
+        // Успешно отправлено
+        print('Реакция успешно удалена');
+      } else {
+        // Ошибка при отправке запроса
+        print('Ошибка при отправке реакции: ${response.reasonPhrase}');
+      }
+    } catch (error) {
+      print('Ошибка при отправке запроса: $error');
+    }
+  }
+
+  static Future<List<Comment>> fetchComments(int postId) async {
+    var token = await TokenStorage.getToken();
+    final Uri uri = Uri.parse('http://46.19.66.10:8080/publications/$postId/comments');
+    final response = await http.get(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body)['content'];
+      return responseData.map((json) => Comment.fromJson(json)).toList();
+    } else {
+      throw Exception('Ошибка при загрузке комментариев');
+    }
+  }
+
+  static Future<void> sendComment(int postId, String text) async {
+    var token = await TokenStorage.getToken();
+    final Uri uri = Uri.parse('http://46.19.66.10:8080/publications/$postId/comments');
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $token',
+    };
+    final Map<String, dynamic> body = {
+      'text': text,
+    };
+
+    final response = await http.post(
+      uri,
+      headers: headers,
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 201) {
+      // Если успешно отправлено, ничего не возвращаем
+      return;
+    } else {
+      throw Exception('Ошибка при отправке комментария');
     }
   }
 

@@ -1,13 +1,14 @@
 import 'author.dart';
 
 class Post {
-  final int rating;
+  int rating;
   final String title;
   final List<String> tags;
   final String text;
   final String image;
   final Author author;
   final int id;
+  String reactionType;
 
   Post({
     required this.id,
@@ -17,5 +18,6 @@ class Post {
     required this.image,
     required this.rating,
     required this.tags,
+    this.reactionType = 'null',
   });
 }
