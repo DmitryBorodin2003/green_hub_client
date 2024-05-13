@@ -9,6 +9,7 @@ class Post {
   final Author author;
   final int id;
   String reactionType;
+  bool hidden;
 
   Post({
     required this.id,
@@ -19,5 +20,6 @@ class Post {
     required this.rating,
     required this.tags,
     this.reactionType = 'null',
+    this.hidden = false, // По умолчанию пост не скрыт
   });
 }

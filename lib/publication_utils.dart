@@ -36,7 +36,7 @@ class PublicationUtils {
 
           // Добавляем проверку на null для поля image
           String? imageUrl = publication['image'] != null ? publication['image'] : null;
-          String reactionType = publication['reactionType'] ?? 'null'; // Если значение reactionType null, то присваиваем пустую строку
+          String reactionType = publication['reactionType'] ?? 'null';
 
           Post post = Post(
             reactionType: reactionType,

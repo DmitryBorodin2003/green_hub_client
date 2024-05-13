@@ -32,10 +32,8 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
   int? selectedOptionIndex; // Индекс выбранной опции сортировки
   List<String> _selectedTags = [];
   List<String> _availableTags = [
-    '#Воронеж',
-    '#Уборка',
-    '#Мусор',
-    '#Животные',
+    'Воронеж',
+    'Мусор',
   ];
 
   @override
@@ -44,6 +42,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     _tabController = TabController(length: 2, vsync: this);
     _tabController.index = 0; // Устанавливаем активную вкладку по умолчанию
     selectedOptionIndex = 0; // При инициализации выбора нет
+    _sortPosts();
   }
 
   int? findPostIndex(Post post, List<Post> postList) {
@@ -54,6 +53,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     }
     return null; // Возвращаем null, если пост не найден
   }
+
 
   Future<void> _showTagSelectionDialog() async {
     return showDialog(
@@ -84,7 +84,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                     bool isSelected = _selectedTags.contains(tag);
                     return CheckboxListTile(
                       controlAffinity: ListTileControlAffinity.leading,
-                      title: Text(tag),
+                      title: Text('#$tag'),
                       value: isSelected,
                       onChanged: (bool? selected) {
                         setState(() {
@@ -104,6 +104,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
+                      _applyTagFilter();
                     },
                     style: ElevatedButton.styleFrom(
                       primary: Colors.green,
@@ -124,6 +125,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
       },
     );
   }
+
 
   Future<void> _showSortOptionsDialog() async {
     return showDialog(
@@ -197,7 +199,7 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop(); // Закрываем диалоговое окно
-                      // логика сортировки на основе выбранной опции
+                      _sortPosts();
                     },
                     style: ElevatedButton.styleFrom(
                       primary: Colors.green,
@@ -218,6 +220,60 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
       },
     );
   }
+
+  void _sortPosts() {
+    if (selectedOptionIndex == 0) {
+      // Сортировка по количеству лайков
+      widget.posts.sort((a, b) => b.rating.compareTo(a.rating));
+      widget.personal_posts.sort((a, b) => b.rating.compareTo(a.rating));
+    } else if (selectedOptionIndex == 1) {
+      //TODO: сортировка по свежести
+      //widget.posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      //widget.personal_posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      widget.posts.sort((a, b) => a.rating.compareTo(b.rating));
+      widget.personal_posts.sort((a, b) => a.rating.compareTo(b.rating));
+    }
+
+    // Обновление экрана после сортировки
+    setState(() {});
+  }
+
+  void _applyTagFilter() {
+    if (_selectedTags.isEmpty) {
+      // Если ни один тег не выбран, показываем все посты
+      setState(() {
+        // Очищаем выбранные теги
+        _selectedTags.clear();
+        // Помечаем все посты как не скрытые
+        for (var post in widget.posts) {
+          post.hidden = false;
+        }
+        for (var post in widget.personal_posts) {
+          post.hidden = false;
+        }
+      });
+      return;
+    }
+
+    setState(() {
+      // Фильтруем посты по выбранным тегам
+      for (var post in widget.posts) {
+        if (post.tags.every((tag) => !_selectedTags.contains(tag))) {
+          post.hidden = true; // Помечаем пост как скрытый
+        } else {
+          post.hidden = false; // Помечаем пост как не скрытый
+        }
+      }
+      for (var post in widget.personal_posts) {
+        if (post.tags.every((tag) => !_selectedTags.contains(tag))) {
+          post.hidden = true; // Помечаем пост как скрытый
+        } else {
+          post.hidden = false; // Помечаем пост как не скрытый
+        }
+      }
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -323,6 +379,9 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
   }
 
   Widget buildPostCard(BuildContext context, List<Post> array, Post post, int index) {
+    if (post.hidden) {
+      return SizedBox.shrink();
+    }
     return Card(
       color: const Color(0xFFf5fff3),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
