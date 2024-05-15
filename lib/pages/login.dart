@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/banned.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import '../post.dart';
 import '../token_storage.dart';
 import '../user_credentials.dart';
 import 'custom_page_route.dart';
@@ -52,7 +52,6 @@ class _LoginState extends State<Login> {
           if (roles.isNotEmpty) {
             String role = roles.first;
             await TokenStorage.saveRole(role);
-            print(role);
             var posts = await PublicationUtils.fetchPublications(
                 'http://46.19.66.10:8080/publications', context);
             var personalposts = await PublicationUtils.fetchPublications(
@@ -68,7 +67,14 @@ class _LoginState extends State<Login> {
         } else {
           print('Не удалось распарсить токен или поле "roles" отсутствует');
         }
-      } else {
+      } else if (response.statusCode == 406) {
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+              page: BannedPage()),
+        );
+      }
+      else {
         showDialog(
           context: context,
           builder: (BuildContext context) {
