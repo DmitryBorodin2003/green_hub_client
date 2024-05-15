@@ -1,17 +1,25 @@
 import 'dart:ffi';
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/lenta.dart';
 import 'package:green_hub_client/pages/login.dart';
+import 'package:green_hub_client/pages/register.dart';
+import 'package:green_hub_client/publication_utils.dart';
+import 'package:green_hub_client/token_storage.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppMetrica.activate(_config);
+
+  await TokenStorage.clearToken();
+  await TokenStorage.clearRole();
 
   runApp(MaterialApp(
       theme: ThemeData(
         primaryColor: Colors.green,
       ),
-      home: Login()
+      home: Lenta(posts: await PublicationUtils.fetchPublicationsWithoutToken(
+      'http://46.19.66.10:8080/publications'), personal_posts: []),
   ));
 }
 

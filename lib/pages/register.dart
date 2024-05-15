@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../author.dart';
 import '../post.dart';
 import '../publication_utils.dart';
@@ -30,7 +31,8 @@ class _RegisterState extends State<Register> {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
-    if (_isChecked && name.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
+    if (_isChecked && name.isNotEmpty && email.isNotEmpty &&
+        password.isNotEmpty) {
       UserCredentials().setUsername(name);
       var url = Uri.parse('http://46.19.66.10:8080/registration');
       var response = await http.post(
@@ -50,22 +52,36 @@ class _RegisterState extends State<Register> {
         var token = responseData['token'];
         await TokenStorage.saveToken(token);
 
-        var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', token, context);
-        var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', token, context);
-        Navigator.pushReplacement(
-          context,
-          CustomPageRoute(
-              page: Lenta(posts: posts, personal_posts: personalposts,)),
-        );
+        Map<String, dynamic>? decodedToken = JwtDecoder.decode(token);
+
+        if (decodedToken.containsKey('roles')) {
+          List<dynamic> roles = decodedToken['roles'];
+          if (roles.isNotEmpty) {
+            String role = roles.first;
+            await TokenStorage.saveRole(role);
+            print(role);
+            var posts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications', context);
+            var personalposts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications/subscriptions', context);
+            Navigator.pushReplacement(
+              context,
+              CustomPageRoute(
+                  page: Lenta(posts: posts, personal_posts: personalposts,)),
+            );
+          } else {
+            print('Роль отсутствует в токене');
+          }
+        } else {
+          print('Не удалось распарсить токен или поле "roles" отсутствует');
+        }
       } else {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Ошибка при входе'),
+              content: Text('Ошибка при регистрации на стороне сервера: ' + response.statusCode.toString()),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -84,7 +100,7 @@ class _RegisterState extends State<Register> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Ошибка'),
-            content: Text('Некорректный ввод'),
+            content: Text('Ошибка при регистрации на стороне клиента: некорректный ввод'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -165,48 +181,52 @@ class _RegisterState extends State<Register> {
                       });
                     },
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Поставив галочку, вы соглашаетесь с ',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontFamily: 'Roboto',
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          AppMetrica.reportEvent('Click on "Terms of use" button');
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text("Пользовательское соглашение"),
-                                content: Text("Поставьте галочку пж"),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () {
-                                      // Действие при нажатии на кнопку "Закрыть"
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("Закрыть"),
-                                  ),
-                                ],
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Поставив галочку, вы соглашаетесь с ',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontFamily: 'Roboto',
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              AppMetrica.reportEvent('Click on "Terms of use" button');
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("Пользовательское соглашение"),
+                                    content: Text("Поставьте галочку, пожалуйста."),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          // Действие при нажатии на кнопку "Закрыть"
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text("Закрыть"),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-
-                        child: Text(
-                          'Пользовательским соглашением',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontFamily: 'Roboto',
+                            child: Text(
+                              'Пользовательским соглашением',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontFamily: 'Roboto',
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -229,33 +249,35 @@ class _RegisterState extends State<Register> {
                 ),
               ),
               SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Уже зарегистрированы? ',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      AppMetrica.reportEvent('Click on "register to login" button');
-                      Navigator.pushReplacement(
-                        context,
-                        CustomPageRoute(page: Login()),
-                      );
-                    },
-                    child: Text(
-                      'Войти',
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    Text(
+                      'Уже зарегистрированы? ',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: Colors.black,
                         fontFamily: 'Roboto',
                       ),
                     ),
-                  ),
-                ],
+                    InkWell(
+                      onTap: () {
+                        AppMetrica.reportEvent('Click on "register to login" button');
+                        Navigator.pushReplacement(
+                          context,
+                          CustomPageRoute(page: Login()),
+                        );
+                      },
+                      child: Text(
+                        'Войти',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontFamily: 'Roboto',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

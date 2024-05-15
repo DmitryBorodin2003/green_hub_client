@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
-import '../post.dart';
+import 'package:green_hub_client/pages/banned.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../token_storage.dart';
 import '../user_credentials.dart';
 import 'custom_page_route.dart';
@@ -39,28 +40,47 @@ class _LoginState extends State<Login> {
           'password': password,
         }),
       );
-
       if (response.statusCode == 200) {
         var responseData = json.decode(response.body);
         var token = responseData['token'];
         await TokenStorage.saveToken(token);
 
-        var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', token, context);
-        var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', token, context);
+        Map<String, dynamic>? decodedToken = JwtDecoder.decode(token);
+
+        if (decodedToken.containsKey('roles')) {
+          List<dynamic> roles = decodedToken['roles'];
+          if (roles.isNotEmpty) {
+            String role = roles.first;
+            await TokenStorage.saveRole(role);
+            var posts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications', context);
+            var personalposts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications/subscriptions', context);
+            Navigator.pushReplacement(
+              context,
+              CustomPageRoute(
+                  page: Lenta(posts: posts, personal_posts: personalposts,)),
+            );
+          } else {
+            print('Роль отсутствует в токене');
+          }
+        } else {
+          print('Не удалось распарсить токен или поле "roles" отсутствует');
+        }
+      } else if (response.statusCode == 406) {
         Navigator.pushReplacement(
           context,
           CustomPageRoute(
-              page: Lenta(posts: posts, personal_posts: personalposts,)),
+              page: BannedPage()),
         );
-      } else {
+      }
+      else {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Ошибка при входе'),
+              content: Text('Ошибка при входе на стороне сервера: ' + response.statusCode.toString()),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -79,7 +99,7 @@ class _LoginState extends State<Login> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Ошибка'),
-            content: Text('Некорректный ввод'),
+            content: Text('Ошибка при авторизации на стороне клиента: некорректный ввод'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -145,13 +165,16 @@ class _LoginState extends State<Login> {
                 ),
               ),
               SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                alignment: WrapAlignment.center, // Выравнивание элементов по центру
                 children: [
-                  Text(
-                    'Новый пользователь? ',
-                    style: TextStyle(
-                      color: Colors.black,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Новый пользователь? ',
+                      style: TextStyle(
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                   InkWell(
@@ -162,10 +185,13 @@ class _LoginState extends State<Login> {
                         CustomPageRoute(page: Register()), // Перенаправление на страницу входа
                       );
                     },
-                    child: Text(
-                      'Зарегистрироваться',
-                      style: TextStyle(
-                        color: Colors.green,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'Зарегистрироваться',
+                        style: TextStyle(
+                          color: Colors.green,
+                        ),
                       ),
                     ),
                   ),

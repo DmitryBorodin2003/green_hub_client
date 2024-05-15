@@ -1,19 +1,33 @@
+import 'dart:typed_data';
+
+import 'author.dart';
+
 class Post {
-  final String username;
+  int rating;
   final String title;
-  final String content;
-  final String? imageUrl;
-  final String? avatarUrl;
-  final int rating;
   final List<String> tags;
+  final String text;
+  final String image;
+  final Author author;
+  final int id;
+  String reactionType;
+  bool hidden;
+  Uint8List? decodedImage;
+  Uint8List? decodedAvatar;
+  String createdTime;
 
   Post({
-    required this.username,
+    required this.id,
     required this.title,
-    required this.content,
-    this.avatarUrl,
-    this.imageUrl,
+    required this.text,
+    required this.author,
+    required this.image,
     required this.rating,
+    required this.createdTime,
     required this.tags,
+    this.reactionType = 'null',
+    this.hidden = false, // По умолчанию пост не скрыт
+    this.decodedImage,
+    this.decodedAvatar,
   });
 }

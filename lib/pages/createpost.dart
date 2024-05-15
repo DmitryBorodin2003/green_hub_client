@@ -1,9 +1,17 @@
+import 'dart:convert';
+
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../publication_utils.dart';
+import '../token_storage.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'package:http/http.dart' as http;
+
+import 'custom_page_route.dart';
+import 'lenta.dart';
 
 class Createpost extends StatefulWidget {
   @override
@@ -17,19 +25,24 @@ class _CreatePostState extends State {
   TextEditingController _textController = TextEditingController();
   List<String> _selectedTags = [];
   List<String> _availableTags = [
-    '#Воронеж',
-    '#Уборка',
-    '#Мусор',
-    '#Животные',
+    'Воронеж',
+    'Мусор',
+    'Субботник',
+    'Животные',
+    'Природа',
+    'Здоровье',
+    'Саморазвитие',
   ];
-  // Добавьте здесь остальные теги по мере необходимости
   String _selectedTagsText = ''; // Поле для отображения выбранных тегов
+  XFile? _pickedImage; // Переменная для хранения выбранного изображения
 
   // Функция для открытия галереи и выбора изображения
   Future<void> _pickImageFromGallery() async {
-    final pickedImage = await ImagePicker().getImage(source: ImageSource.gallery);
+    final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedImage != null) {
-      // TODO: Действия с выбранным изображением
+      setState(() {
+        _pickedImage = pickedImage;
+      });
     }
   }
 
@@ -46,7 +59,7 @@ class _CreatePostState extends State {
               ),
               title: Text(
                 'Выберите теги',
-                textAlign: TextAlign.center, // Центрирование заголовка
+                textAlign: TextAlign.center,
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -60,7 +73,7 @@ class _CreatePostState extends State {
                     bool isSelected = _selectedTags.contains(tag);
                     return CheckboxListTile(
                       controlAffinity: ListTileControlAffinity.leading,
-                      title: Text(tag),
+                      title: Text('#$tag'),
                       value: isSelected,
                       onChanged: (bool? selected) {
                         setState(() {
@@ -101,9 +114,28 @@ class _CreatePostState extends State {
   }
 
   // Функция для обработки нажатия на кнопку "Добавить"
-  void _onAddButtonPressed() {
+  Future<void> _onAddButtonPressed() async {
     AppMetrica.reportEvent('Click on "Add post" button');
-    // TODO: Действия при нажатии на кнопку "Добавить"
+    var code;
+    if (_pickedImage != null) {
+      code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
+    } else {
+      code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
+    }
+    if (code == 201) {
+      var posts = await PublicationUtils.fetchPublications(
+          'http://46.19.66.10:8080/publications', context);
+      var personalposts = await PublicationUtils.fetchPublications(
+          'http://46.19.66.10:8080/publications/subscriptions', context);
+      Navigator.pushReplacement(
+        context,
+        CustomPageRoute(
+            page: Lenta(posts: posts, personal_posts: personalposts,)),
+      );
+    } else {
+      // Обработка ошибки при отправке данных
+      print('Ошибка при отправке данных:');
+    }
   }
 
   @override
@@ -203,20 +235,20 @@ class _CreatePostState extends State {
                     ),
                     SizedBox(height: 10.0),
                     GestureDetector(
-                      onTap: _pickImageFromGallery, // Вызываем функцию для открытия галереи
+                      onTap: _pickImageFromGallery,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey), // Добавляем серую обводку
+                          border: Border.all(color: Colors.grey),
                         ),
                         alignment: Alignment.center,
                         child: TextField(
-                          enabled: false, // Отключаем возможность редактирования
+                          enabled: false,
                           decoration: InputDecoration(
-                            hintText: '📎 Загрузить фото',
+                            hintText: _pickedImage != null ? _pickedImage!.name : '📎 Загрузить фото',
                             contentPadding: EdgeInsets.all(10.0),
-                            border: InputBorder.none, // Убираем внутреннюю обводку
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
@@ -245,7 +277,7 @@ class _CreatePostState extends State {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey), // Добавляем серую обводку
+                          border: Border.all(color: Colors.grey),
                         ),
                         child: Text(
                           _selectedTagsText.isNotEmpty ? _selectedTagsText : '# Теги',
@@ -274,7 +306,7 @@ class _CreatePostState extends State {
                   ),
                   style: ElevatedButton.styleFrom(
                     primary: Colors.green,
-                    padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 15.0), // Увеличиваем отступы
+                    padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 15.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
