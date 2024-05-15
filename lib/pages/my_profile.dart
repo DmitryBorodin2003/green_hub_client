@@ -12,6 +12,7 @@ import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
 import 'comments.dart';
 import 'custom_page_route.dart';
+import 'iconselectiondialog.dart';
 import 'lenta.dart';
 import 'login.dart';
 import 'package:http/http.dart' as http;
@@ -23,6 +24,7 @@ class Profile extends StatefulWidget {
   XFile? _pickedImage;
   Uint8List? _pickedImageBytes;
   Uint8List? decodedAvatar;
+  bool? role = false;
 
   Profile({required this.author});
 
@@ -32,14 +34,42 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   late TabController _tabController;
+  List<Post> posts = [];
   List<Achievement> achievements = [];
-  List<Post> posts = []; // Создаем список постов и инициализируем его пустым списком
-
+  List<Achievement> allAchievements = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
+
+    getAchievements(widget.author).then((fetchedAchievements) {
+      // После получения постов обновляем состояние виджета
+      setState(() {
+        achievements = fetchedAchievements;
+        decodeImages();
+      });
+    }).catchError((error) {
+      // Обрабатываем ошибку при получении достижений
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text(error.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    });
+
 
     getPosts(widget.author).then((fetchedPosts) {
       setState(() {
@@ -66,34 +96,8 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
         },
       );
     });
-
-    getAchievements(widget.author).then((fetchedAchievements) {
-      // После получения постов обновляем состояние виджета
-      setState(() {
-        achievements = fetchedAchievements;
-      });
-    }).catchError((error) {
-      // Обрабатываем ошибку при получении достижений
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Ошибка'),
-            content: Text(error.toString()),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    });
-
-
+    checkRole();
+    getAllAchievements();
   }
 
   // Предварительно декодировать изображения при загрузке постов
@@ -101,6 +105,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
     widget.decodedAvatar = base64.decode(widget.author.userImage);
     for (var post in posts) {
       post.decodedImage = base64.decode(post.image!);
+    }
+    for (var achievement in achievements) {
+      achievement.decodedImage = base64Decode(achievement.image);
     }
   }
 
@@ -208,6 +215,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                               onTap: () {
                                 AppMetrica.reportEvent('Click on "Quit" button');
                                 TokenStorage.clearToken();
+                                TokenStorage.clearRole();
                                 Navigator.pushReplacement(
                                   context,
                                   CustomPageRoute(page: Login()),
@@ -236,65 +244,101 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                 ),
                 SizedBox(height: 8),
                 // Блок "Список значков" с заслугами владельца профиля
-                Container(
-                  margin: EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF5FFF3), // Цвет фона блока
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 3),
-                          child: Text(
-                            'Список значков',
-                            style: TextStyle(fontSize: 24),
-                          ),
-                        ),
-                      ),
-                      Divider(
-                        color: Colors.grey,
-                        thickness: 1,
-                      ),
-                      SizedBox(height: 15),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: achievements.isNotEmpty ? achievements.length : 1, // Проверяем длину списка достижений
-                        itemBuilder: (context, index) {
-                          if (achievements.isEmpty) {
-                            return Center(
-                              child: Text(
-                                'У пользователя нет достижений',
-                                style: TextStyle(fontSize: 20),
-                              ),
+                InkWell(
+                  onTap: () {
+                    if (widget.role!) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return IconSelectionDialog(
+                            selectedAchievements: achievements, availableAchievements: allAchievements,
+                          );
+                        },
+                      ).then((selectedAchievements) async {
+                        // Обработка выбранных значков после закрытия диалога
+                        if (selectedAchievements != null) {
+                          await PublicationUtils.editAchievements(widget.author.userId, selectedAchievements);
+                          Author? author = await PublicationUtils.fetchAuthorByUsername(widget.author.username);
+                          if (author != null) {
+                            Navigator.pushReplacement(
+                              context,
+                              CustomPageRoute(page: Profile(author: author)),
                             );
                           } else {
-                            return Row(
-                              children: [
-                                SizedBox(
-                                  width: 24, // Ширина изображения
-                                  height: 24, // Высота изображения
-                                  child: Image.memory(
-                                    base64.decode(achievements[index].image), // URL изображения
-                                    fit: BoxFit.cover, // Параметр fit для подгонки изображения
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  achievements[index].name, // Название достижения
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                              ],
+                            Navigator.pushReplacement(
+                              context,
+                              CustomPageRoute(page: Profile(author: widget.author)),
                             );
                           }
-                        },
-                      ),
-
-                    ],
+                        }
+                      });
+                    } else {
+                      print('Только администратор может открыть это окно');
+                    }
+                  },
+                  highlightColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  child: Container(
+                    margin: EdgeInsets.fromLTRB(16, 10, 16, 0),
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF5FFF3), // Цвет фона блока
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 3),
+                            child: Text(
+                              'Список значков',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                          ),
+                        ),
+                        Divider(
+                          color: Colors.grey,
+                          thickness: 1,
+                        ),
+                        SizedBox(height: 15),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: achievements.isNotEmpty ? achievements.length : 1, // Проверяем длину списка достижений
+                          itemBuilder: (context, index) {
+                            if (achievements.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'У пользователя нет достижений',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              );
+                            } else {
+                              return Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24, // Ширина изображения
+                                    height: 24, // Высота изображения
+                                    child: achievements[index].decodedImage != null
+                                        ? Image.memory(
+                                      achievements[index].decodedImage!,
+                                      fit: BoxFit.cover, // Параметр fit для подгонки изображения
+                                    )
+                                        : SizedBox(),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    achievements[index].name, // Название достижения
+                                    style: TextStyle(fontSize: 20),
+                                  ),
+                                ],
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(height: 8),
@@ -400,13 +444,16 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                     Row(
                                       children: [
                                         IconButton(
-                                          onPressed: () {
+                                          onPressed: () async {
                                             AppMetrica.reportEvent(
                                                 'Click on "Like" button');
-                                            handleReaction(post, 'LIKE');
-                                            setState(() {
-                                              posts[index] = post;
-                                            });
+
+                                            var code = await handleReaction(post, 'LIKE');
+                                            if (code == 201) {
+                                              setState(() {
+                                                posts[index] = post;
+                                              });
+                                            }
                                           },
                                           icon: Icon(
                                             Icons.thumb_up,
@@ -414,13 +461,15 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                           ),
                                         ),
                                         IconButton(
-                                          onPressed: () {
+                                          onPressed: () async {
                                             AppMetrica.reportEvent(
                                                 'Click on "Dislike" button');
-                                            handleReaction(post, 'DISLIKE');
-                                            setState(() {
-                                              posts[index] = post;
-                                            });
+                                            var code = await handleReaction(post, 'DISLIKE');
+                                            if (code == 201) {
+                                              setState(() {
+                                                posts[index] = post;
+                                              });
+                                            }
                                           },
                                           icon: Icon(
                                             Icons.thumb_down,
@@ -484,8 +533,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
     );
   }
 
-  void handleReaction(Post post, String reactionType) {
-    //TODO: check 201 status
+  Future<int?> handleReaction(Post post, String reactionType) async {
     switch (reactionType) {
       case 'LIKE':
         if (post.reactionType == 'DISLIKE') {
@@ -512,42 +560,29 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
         }
         break;
       default:
-      // Действия, если reactionType не равно 'LIKE' или 'DISLIKE'
-        break;
+        return -1;
     }
-    PublicationUtils.sendReaction(post.id, reactionType);
+    int? code;
+    if (post.reactionType != 'null') {
+      code = await PublicationUtils.sendReaction(post.id, reactionType);
+    } else {
+      code = await PublicationUtils.deleteReaction(post.id);
+    }
+    return code;
   }
 
+  // Метод для удаления поста
   void _deletePost(int index) async {
     try {
-      var postId = posts[index].id;
-      var token = await TokenStorage.getToken();
-      // Создание URL для DELETE запроса
-      print(postId);
-      print(token);
-      var deleteUrl = Uri.parse('http://46.19.66.10:8080/publications/$postId');
-
-      // Отправка DELETE запроса
-      var response = await http.delete(
-        deleteUrl,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      // Проверка статуса ответа
-      if (response.statusCode == 204) {
-        // Успешно удалено, обновите состояние
+      var code = await PublicationUtils.deletePost(posts[index].id);
+      if (code == 204) {
         setState(() {
           posts.removeAt(index);
         });
       } else {
-        // Обработка ошибки удаления
-        print('Ошибка при удалении публикации: ${response.statusCode}');
+        print('Ошибка при удалении публикации: ${code}');
       }
     } catch (e) {
-      // Обработка ошибки
       print('Произошла ошибка при удалении публикации: $e');
     }
   }
@@ -568,9 +603,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
               child: Text("Нет"),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 AppMetrica.reportEvent('Click on "Confirm delete" button');
-                _deletePost(index); // Удаляем пост
+                _deletePost(index);
                 Navigator.of(context).pop(); // Закрываем диалоговое окно
               },
               child: Text("Да"),
@@ -697,12 +732,16 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
               child: ElevatedButton(
                 onPressed: () async {
                   if (widget._pickedImageBytes != null) {
-                    await PublicationUtils.setImageAndEmail(widget.author.userId, widget._pickedImage!, emailController.text);
-                    setState(() {
-                      widget.decodedAvatar = widget._pickedImageBytes;
-                    });
+                    var code = await PublicationUtils.setImageAndEmail(widget.author.userId, widget._pickedImage!, emailController.text);
+                    if (code == 200) {
+                      setState(() {
+                        widget.decodedAvatar = widget._pickedImageBytes;
+                        widget.author.email = emailController.text;
+                      });
+                    }
                   } else {
                     await PublicationUtils.setEmail(widget.author.userId, emailController.text);
+                    widget.author.email = emailController.text;
                   }
                   Navigator.of(context).pop();
                 },
@@ -717,6 +756,22 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
         );
       },
     );
+  }
+
+  Future<void> checkRole() async {
+    String? role = await TokenStorage.getRole();
+    if (role == 'ROLE_ADMIN' || role == 'ROLE_MODERATOR') {
+      widget.role = true;
+    } else {
+      widget.role = false;
+    }
+    setState(() {
+      widget.role;
+    });
+  }
+
+  Future<void> getAllAchievements() async {
+    allAchievements = await PublicationUtils.getAchievements('http://46.19.66.10:8080/users/achievements');
   }
 
 }

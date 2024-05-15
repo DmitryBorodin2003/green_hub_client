@@ -3,9 +3,11 @@ class Author {
     final String userImage;
     final String username;
     final bool? subscribed;
-    final String? email;
+    String? email;
     int? subscriptionsCount;
     int? subscribersCount;
+    String? state;
+    String? role;
 
     Author({
       required this.username,
@@ -15,10 +17,20 @@ class Author {
       this.subscriptionsCount,
       this.email,
       this.subscribed,
+      this.state,
+      this.role,
     });
 
     factory Author.fromJson(Map<String, dynamic> json) {
+      List<dynamic>? rolesJson = json['roles'];
+      String? role;
+      if (rolesJson != null && rolesJson.isNotEmpty) {
+        final Map<String, dynamic> roleMap = rolesJson.first;
+        role = roleMap['name'];
+      }
       return Author(
+        role: role,
+        state: json['state'],
         subscribersCount: json['subscribersCount'],
         subscriptionsCount: json['subscriptionsCount'],
         email: json['email'],

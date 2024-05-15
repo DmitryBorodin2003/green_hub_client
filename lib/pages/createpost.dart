@@ -27,8 +27,12 @@ class _CreatePostState extends State {
   List<String> _availableTags = [
     'Воронеж',
     'Мусор',
+    'Субботник',
+    'Животные',
+    'Природа',
+    'Здоровье',
+    'Саморазвитие',
   ];
-  // Добавьте здесь остальные теги по мере необходимости
   String _selectedTagsText = ''; // Поле для отображения выбранных тегов
   XFile? _pickedImage; // Переменная для хранения выбранного изображения
 
@@ -55,7 +59,7 @@ class _CreatePostState extends State {
               ),
               title: Text(
                 'Выберите теги',
-                textAlign: TextAlign.center, // Центрирование заголовка
+                textAlign: TextAlign.center,
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -273,7 +277,7 @@ class _CreatePostState extends State {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey), // Добавляем серую обводку
+                          border: Border.all(color: Colors.grey),
                         ),
                         child: Text(
                           _selectedTagsText.isNotEmpty ? _selectedTagsText : '# Теги',
@@ -302,7 +306,7 @@ class _CreatePostState extends State {
                   ),
                   style: ElevatedButton.styleFrom(
                     primary: Colors.green,
-                    padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 15.0), // Увеличиваем отступы
+                    padding: EdgeInsets.symmetric(horizontal: 70.0, vertical: 15.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../post.dart';
 import '../token_storage.dart';
 import '../user_credentials.dart';
@@ -39,28 +40,41 @@ class _LoginState extends State<Login> {
           'password': password,
         }),
       );
-
       if (response.statusCode == 200) {
         var responseData = json.decode(response.body);
         var token = responseData['token'];
         await TokenStorage.saveToken(token);
 
-        var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', context);
-        var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', context);
-        Navigator.pushReplacement(
-          context,
-          CustomPageRoute(
-              page: Lenta(posts: posts, personal_posts: personalposts,)),
-        );
+        Map<String, dynamic>? decodedToken = JwtDecoder.decode(token);
+
+        if (decodedToken.containsKey('roles')) {
+          List<dynamic> roles = decodedToken['roles'];
+          if (roles.isNotEmpty) {
+            String role = roles.first;
+            await TokenStorage.saveRole(role);
+            print(role);
+            var posts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications', context);
+            var personalposts = await PublicationUtils.fetchPublications(
+                'http://46.19.66.10:8080/publications/subscriptions', context);
+            Navigator.pushReplacement(
+              context,
+              CustomPageRoute(
+                  page: Lenta(posts: posts, personal_posts: personalposts,)),
+            );
+          } else {
+            print('Роль отсутствует в токене');
+          }
+        } else {
+          print('Не удалось распарсить токен или поле "roles" отсутствует');
+        }
       } else {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Ошибка при входе'),
+              content: Text('Ошибка при входе на стороне сервера: ' + response.statusCode.toString()),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -79,7 +93,7 @@ class _LoginState extends State<Login> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Ошибка'),
-            content: Text('Некорректный ввод'),
+            content: Text('Ошибка при авторизации на стороне клиента: некорректный ввод'),
             actions: [
               TextButton(
                 onPressed: () {

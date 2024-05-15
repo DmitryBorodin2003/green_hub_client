@@ -2,11 +2,13 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/profile.dart';
 import 'package:green_hub_client/publication_utils.dart';
 
 import '../author.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
+import 'custom_page_route.dart';
 
 class Subscriptions extends StatefulWidget {
   final List<Author> subscriptionList;
@@ -119,12 +121,34 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
           ),
           margin: EdgeInsets.all(8), // Добавляем отступы между элементами списка
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundImage: MemoryImage(base64Decode(widget.users[index].userImage)),
+            leading: GestureDetector(
+              onTap: () async {
+                Author? author = await PublicationUtils.fetchAuthorByUsername(widget.users[index].username);
+                if (author != null) {
+                  Navigator.pushReplacement(
+                    context,
+                    CustomPageRoute(page: NotMyProfile(author: author)),
+                  );
+                }
+              },
+              child: CircleAvatar(
+                backgroundImage: MemoryImage(base64Decode(widget.users[index].userImage)),
+              ),
             ),
-            title: Text(
-              widget.users[index].username,
-              style: TextStyle(fontSize: 16), // Размер текста
+            title: GestureDetector(
+              onTap: () async {
+                Author? author = await PublicationUtils.fetchAuthorByUsername(widget.users[index].username);
+                if (author != null) {
+                  Navigator.pushReplacement(
+                    context,
+                    CustomPageRoute(page: NotMyProfile(author: author)),
+                  );
+                }
+              },
+              child: Text(
+                widget.users[index].username,
+                style: TextStyle(fontSize: 16), // Размер текста
+              ),
             ),
             trailing: widget.isSubscriptionList
                 ? ElevatedButton(

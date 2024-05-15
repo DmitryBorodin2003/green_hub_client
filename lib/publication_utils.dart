@@ -40,6 +40,7 @@ class PublicationUtils {
           String reactionType = publication['reactionType'] ?? 'null';
 
           Post post = Post(
+            createdTime: publication['createdTime'],
             reactionType: reactionType,
             id: publication['id'],
             text: publication['text'],
@@ -97,6 +98,57 @@ class PublicationUtils {
       return [];
     }
   }
+
+  static Future<List<Post>> fetchPublicationsWithoutToken(String url) async {
+    try {
+      var publicationsResponse = await http.get(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
+      if (publicationsResponse.statusCode == 200) {
+        var responseData = json.decode(utf8.decode(publicationsResponse.bodyBytes));
+        List<dynamic> content = responseData['content']; // Получение списка публикаций
+        List<Post> posts = []; // Создание списка для хранения постов
+
+        for (var publication in content) {
+          Author author = Author(
+            username: publication['author']['username'],
+            userImage: publication['author']['userImage'],
+            userId: publication['author']['userId'],
+          );
+
+          // Добавляем проверку на null для поля image
+          String? imageUrl = publication['image'] != null ? publication['image'] : null;
+          String reactionType = publication['reactionType'] ?? 'null';
+
+          Post post = Post(
+            createdTime: publication['createdTime'],
+            reactionType: reactionType,
+            id: publication['id'],
+            text: publication['text'],
+            title: publication['title'],
+            author: author,
+            image: imageUrl ?? '',
+            rating: publication['rating'],
+            tags: List<String>.from(publication['tags']),
+          );
+
+          posts.add(post);
+        }
+
+        return posts;
+      } else {
+        // Обработка ошибки и возврат пустого списка
+        return [];
+      }
+    } catch (e) {
+      // Обработка ошибки и возврат пустого списка
+      return [];
+    }
+  }
+
 
   static Future<List<List<Author>>> fetchSubscriptionsAndSubscribers(String currentUsername) async {
     var token = await TokenStorage.getToken();
@@ -231,6 +283,45 @@ class PublicationUtils {
     }
   }
 
+  static Future<int> applyOrFireModer(int userId, bool status) async {
+    String url = status ? 'http://46.19.66.10:8080/users/$userId/downgrade' : 'http://46.19.66.10:8080/users/$userId/upgrade';
+
+    try {
+      var token = await TokenStorage.getToken();
+      var response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode;
+    } catch (e) {
+      // Обработка исключений
+      print('Произошла ошибка: $e');
+      return -1; // Возвращаем -1 в случае ошибки
+    }
+  }
+
+  static Future<int> banOrUnbanUser(int userId, bool status) async {
+    String url = status ? 'http://46.19.66.10:8080/users/$userId/unban' : 'http://46.19.66.10:8080/users/$userId/ban';
+    try {
+      var token = await TokenStorage.getToken();
+      var response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode;
+    } catch (e) {
+      // Обработка исключений
+      print('Произошла ошибка: $e');
+      return -1; // Возвращаем -1 в случае ошибки
+    }
+  }
+
   static Future<List<Achievement>> getAchievements(String url) async {
     try {
       var token = await TokenStorage.getToken();
@@ -239,7 +330,6 @@ class PublicationUtils {
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
-          // Добавьте другие необходимые заголовки
         },
       );
 
@@ -261,7 +351,7 @@ class PublicationUtils {
     }
   }
 
-  static Future<void> sendReaction(int postId, String reactionType) async {
+  static Future<int?> sendReaction(int postId, String reactionType) async {
     String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
     var token = await TokenStorage.getToken();
 
@@ -278,21 +368,13 @@ class PublicationUtils {
         },
         body: requestBodyJson,
       );
-
-      // Проверяем статус ответа
-      if (response.statusCode == 201) {
-        // Успешно отправлено
-        print('Реакция успешно отправлена');
-      } else {
-        // Ошибка при отправке запроса
-        print('Ошибка при отправке реакции: ${response.reasonPhrase}');
-      }
+      return response.statusCode;
     } catch (error) {
       print('Ошибка при отправке запроса: $error');
     }
   }
 
-  static Future<void> deleteReaction(int postId) async {
+  static Future<int?> deleteReaction(int postId) async {
     String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
     var token = await TokenStorage.getToken();
 
@@ -304,15 +386,7 @@ class PublicationUtils {
           'Authorization': 'Bearer $token',
         },
       );
-
-      // Проверяем статус ответа
-      if (response.statusCode == 204) {
-        // Успешно отправлено
-        print('Реакция успешно удалена');
-      } else {
-        // Ошибка при отправке запроса
-        print('Ошибка при отправке реакции: ${response.reasonPhrase}');
-      }
+      return response.statusCode;
     } catch (error) {
       print('Ошибка при отправке запроса: $error');
     }
@@ -362,7 +436,7 @@ class PublicationUtils {
     }
   }
 
-  static Future<void> setImageAndEmail(int userId, XFile image, String email) async {
+  static Future<int> setImageAndEmail(int userId, XFile image, String email) async {
     var token = await TokenStorage.getToken();
 
     var request = http.MultipartRequest(
@@ -384,7 +458,7 @@ class PublicationUtils {
 
     // Отправка PATCH запроса
     var streamedResponse = await request.send();
-    print(streamedResponse.statusCode);
+    return streamedResponse.statusCode;
   }
 
   static Future<void> setEmail(int userId, String email) async {
@@ -462,6 +536,44 @@ class PublicationUtils {
       print('An error occurred: $e');
       return -1; // Возврат -1 в случае ошибки
     }
+  }
+
+  static Future<bool> checkAdminRole() async {
+    String? role = await TokenStorage.getRole();
+    if (role == 'ROLE_ADMIN') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static Future<int> deletePost(int postId) async {
+    var token = await TokenStorage.getToken();
+    final url = Uri.parse('http://46.19.66.10:8080/publications/$postId');
+
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode;
+  }
+
+  static Future<int> editAchievements(int userId, List<String> achievements) async {
+    var token = await TokenStorage.getToken();
+    final url = Uri.parse('http://46.19.66.10:8080/users/$userId/achievements');
+
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(achievements),
+    );
+    return response.statusCode;
   }
 
 }

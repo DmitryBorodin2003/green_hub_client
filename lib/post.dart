@@ -14,6 +14,7 @@ class Post {
   bool hidden;
   Uint8List? decodedImage;
   Uint8List? decodedAvatar;
+  String createdTime;
 
   Post({
     required this.id,
@@ -22,6 +23,7 @@ class Post {
     required this.author,
     required this.image,
     required this.rating,
+    required this.createdTime,
     required this.tags,
     this.reactionType = 'null',
     this.hidden = false, // По умолчанию пост не скрыт

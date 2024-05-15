@@ -19,61 +19,98 @@ class BottomNavigationLogic {
   static void handleNavigation(BuildContext context, int index) async {
     switch (index) {
       case 0:
-        //Действия при выборе ленты
+      //Действия при выборе ленты
         AppMetrica.reportEvent('Click on "Lenta" button');
-        var posts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications', context);
-        var personalposts = await PublicationUtils.fetchPublications(
-            'http://46.19.66.10:8080/publications/subscriptions', context);
-        Navigator.pushReplacement(
-          context,
-          CustomPageRoute(
-              page: Lenta(posts: posts, personal_posts: personalposts,)),
-        );
+        if (await TokenStorage.getToken() != null) {
+          var posts = await PublicationUtils.fetchPublications(
+              'http://46.19.66.10:8080/publications', context);
+          var personalposts = await PublicationUtils.fetchPublications(
+              'http://46.19.66.10:8080/publications/subscriptions', context);
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+                page: Lenta(posts: posts, personal_posts: personalposts,)),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+                page: Lenta(posts: await PublicationUtils.fetchPublicationsWithoutToken(
+                    'http://46.19.66.10:8080/publications'), personal_posts: []),
+          ));
+        }
         break;
       case 1:
       // Действия при выборе создания поста
         AppMetrica.reportEvent('Click on "New post" button');
-        Navigator.pushReplacement(
-          context,
-          CustomPageRoute(
-            page: Createpost(),
-          ),
-        );
+        if (await TokenStorage.getToken() != null) {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+              page: Createpost(),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+              page: Login(),
+            ),
+          );
+        }
         break;
       case 2:
         //Действия при выборе страницы подписки/подписчики
         AppMetrica.reportEvent('Click on "Subscriptions" button');
-        String? currentUsername = UserCredentials().username;
-        if (currentUsername != null) {
-          var subscriptionsAndSubscribers = await PublicationUtils.fetchSubscriptionsAndSubscribers(currentUsername!);
-          List<Author> subscriptionList = subscriptionsAndSubscribers[0];
-          List<Author> subscribersList = subscriptionsAndSubscribers[1];
+        if (await TokenStorage.getToken() != null) {
+          String? currentUsername = UserCredentials().username;
+          if (currentUsername != null) {
+            var subscriptionsAndSubscribers = await PublicationUtils.fetchSubscriptionsAndSubscribers(currentUsername!);
+            List<Author> subscriptionList = subscriptionsAndSubscribers[0];
+            List<Author> subscribersList = subscriptionsAndSubscribers[1];
+            Navigator.pushReplacement(
+              context,
+              CustomPageRoute(page: Subscriptions(subscriptionList: subscriptionList, followerList: subscribersList)),
+            );
+          }
+        } else {
           Navigator.pushReplacement(
             context,
-            CustomPageRoute(page: Subscriptions(subscriptionList: subscriptionList, followerList: subscribersList)),
+            CustomPageRoute(
+              page: Login(),
+            ),
           );
         }
+
         break;
       case 3:
         //Действия при выборе своего профиля
         AppMetrica.reportEvent('Click on "My profile" button');
-        String? currentUsername = UserCredentials().username;
-        try {
-          Author? author = await PublicationUtils.fetchAuthorByUsername(currentUsername!);
-          if (author != null) {
-            Navigator.pushReplacement(
-              context,
-              CustomPageRoute(page: Profile(author: author)),
-            );
-            print(author.userId);
-          } else {
-            // Обработка случая, когда пользователь не найден или произошла ошибка
-            print('Пользователь с таким именем не найден');
+        if (await TokenStorage.getToken() != null) {
+          String? currentUsername = UserCredentials().username;
+          try {
+            Author? author = await PublicationUtils.fetchAuthorByUsername(currentUsername!);
+            if (author != null) {
+              Navigator.pushReplacement(
+                context,
+                CustomPageRoute(page: Profile(author: author)),
+              );
+              print(author.userId);
+            } else {
+              // Обработка случая, когда пользователь не найден или произошла ошибка
+              print('Пользователь с таким именем не найден');
+            }
+          } catch (e) {
+            // Обработка ошибок
+            print('Произошла ошибка: $e');
           }
-        } catch (e) {
-          // Обработка ошибок
-          print('Произошла ошибка: $e');
+        } else {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+              page: Login(),
+            ),
+          );
         }
         break;
       default:
