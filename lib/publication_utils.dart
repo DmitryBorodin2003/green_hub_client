@@ -3,9 +3,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/my_profile.dart';
+import 'package:green_hub_client/pages/profile.dart';
 import 'package:green_hub_client/post.dart';
 import 'package:green_hub_client/comment.dart';
 import 'package:green_hub_client/token_storage.dart';
+import 'package:green_hub_client/user_credentials.dart';
 import 'package:http/http.dart' as http;
 import 'achievement.dart';
 import 'author.dart';
@@ -194,7 +197,6 @@ class PublicationUtils {
 
       return [subscriptionList, subscribersList];
     } else {
-      // Обработка ошибок, например, showDialog(...)
       return [[], []]; // Возвращаем пустые списки в случае ошибки
     }
   }
@@ -576,4 +578,105 @@ class PublicationUtils {
     return response.statusCode;
   }
 
+  static Future<void> showErrorDialog(BuildContext context, String errorMessage) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Ошибка'),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Future<List<Post>> getPosts(BuildContext context, Author author) async {
+    int userId = author.userId;
+    return PublicationUtils.fetchPublications('http://46.19.66.10:8080/publications/user/$userId', context);
+  }
+
+  static Future<void> checkRoleNMP(State state, NotMyProfile widget) async {
+    String? role = await TokenStorage.getRole();
+    if (role == 'ROLE_ADMIN') {
+      widget.role = true;
+    }
+
+    if (role == 'ROLE_MODERATOR') {
+      widget.moderRole = true;
+    }
+    state.setState(() {
+      widget.role;
+      widget.moderRole;
+    });
+  }
+
+  static Future<void> checkRoleMP(State state, Profile widget) async {
+    String? role = await TokenStorage.getRole();
+    if (role == 'ROLE_ADMIN' || role == 'ROLE_MODERATOR') {
+      widget.role = true;
+    } else {
+      widget.role = false;
+    }
+    state.setState(() {
+      widget.role;
+    });
+  }
+
+  static void decodeImagesNMP(NotMyProfile widget, List<Post> posts, List<Achievement> achievements) {
+    widget.decodedAvatar = base64.decode(widget.author.userImage);
+    for (var post in posts) {
+      post.decodedImage = base64.decode(post.image);
+    }
+    for (var achievement in achievements) {
+      achievement.decodedImage = base64Decode(achievement.image);
+    }
+  }
+
+  static void decodeImagesMP(Profile widget, List<Post> posts, List<Achievement> achievements) {
+    widget.decodedAvatar = base64.decode(widget.author.userImage);
+    for (var post in posts) {
+      post.decodedImage = base64.decode(post.image);
+    }
+    for (var achievement in achievements) {
+      achievement.decodedImage = base64Decode(achievement.image);
+    }
+  }
+
+  static Future<void> deletePostUtil(State state, List<Post> posts, int index) async {
+    try {
+      var code = await PublicationUtils.deletePost(posts[index].id);
+      if (code == 204) {
+        state.setState(() {
+          posts.removeAt(index);
+        });
+      } else {
+        print('Ошибка при удалении публикации: ${code}');
+      }
+    } catch (e) {
+      print('Произошла ошибка при удалении публикации: $e');
+    }
+  }
+
+  static Future<void> checkToken() async {
+    var name = UserCredentials().username;
+    Author? author;
+    if (name != null) {
+      author = await fetchAuthorByUsername(name);
+      if (await TokenStorage.getRole() == author?.role) {
+        //успешный сценарий, токен в силе
+      } else {
+        //разные роли -> токен устарел -> всё обнулить и goto login
+      }
+    } else {
+      //username = null -> token is empty -> на всякий случай всё обнулить и goto login
+    }
+  }
 }
