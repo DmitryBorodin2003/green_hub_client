@@ -167,7 +167,7 @@ class PublicationUtils {
     }
 
     var subscriptionsResponse = await http.get(
-      Uri.parse('http://46.19.66.10:8080/users/$userId/subscriptions'), // Используем userId
+      Uri.parse('http://185.251.89.34:8080/users/$userId/subscriptions'), // Используем userId
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -175,7 +175,7 @@ class PublicationUtils {
     );
 
     var subscribersResponse = await http.get(
-      Uri.parse('http://46.19.66.10:8080/users/$userId/subscribers'), // Используем userId
+      Uri.parse('http://185.251.89.34:8080/users/$userId/subscribers'), // Используем userId
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $token',
@@ -206,7 +206,7 @@ class PublicationUtils {
     try {
       var token = TokenStorage.getToken();
       var response = await http.get(
-        Uri.parse('http://46.19.66.10:8080/users/$username'),
+        Uri.parse('http://185.251.89.34:8080/users/$username'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -234,7 +234,7 @@ class PublicationUtils {
     try {
       var token = await TokenStorage.getToken();
       var response = await http.get(
-        Uri.parse('http://46.19.66.10:8080/users/' + username),
+        Uri.parse('http://185.251.89.34:8080/users/' + username),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -248,7 +248,7 @@ class PublicationUtils {
         // Обработка случая, когда ответ не 200 OK
         print(token.toString());
         print(response.statusCode);
-        print('http://46.19.66.10:8080/users/' + username);
+        print('http://185.251.89.34:8080/users/' + username);
         print('Ошибка при получении данных пользователя');
         return null;
       }
@@ -286,7 +286,7 @@ class PublicationUtils {
   }
 
   static Future<int> applyOrFireModer(int userId, bool status) async {
-    String url = status ? 'http://46.19.66.10:8080/users/$userId/downgrade' : 'http://46.19.66.10:8080/users/$userId/upgrade';
+    String url = status ? 'http://185.251.89.34:8080/users/$userId/downgrade' : 'http://185.251.89.34:8080/users/$userId/upgrade';
 
     try {
       var token = await TokenStorage.getToken();
@@ -306,7 +306,7 @@ class PublicationUtils {
   }
 
   static Future<int> banOrUnbanUser(int userId, bool status) async {
-    String url = status ? 'http://46.19.66.10:8080/users/$userId/unban' : 'http://46.19.66.10:8080/users/$userId/ban';
+    String url = status ? 'http://185.251.89.34:8080/users/$userId/unban' : 'http://185.251.89.34:8080/users/$userId/ban';
     try {
       var token = await TokenStorage.getToken();
       var response = await http.post(
@@ -354,7 +354,7 @@ class PublicationUtils {
   }
 
   static Future<int?> sendReaction(int postId, String reactionType) async {
-    String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
+    String url = 'http://185.251.89.34:8080/publications/$postId/reactions';
     var token = await TokenStorage.getToken();
 
     String requestBodyJson = json.encode({
@@ -377,7 +377,7 @@ class PublicationUtils {
   }
 
   static Future<int?> deleteReaction(int postId) async {
-    String url = 'http://46.19.66.10:8080/publications/$postId/reactions';
+    String url = 'http://185.251.89.34:8080/publications/$postId/reactions';
     var token = await TokenStorage.getToken();
 
     try {
@@ -396,7 +396,7 @@ class PublicationUtils {
 
   static Future<List<Comment>> fetchComments(int postId) async {
     var token = await TokenStorage.getToken();
-    final Uri uri = Uri.parse('http://46.19.66.10:8080/publications/$postId/comments');
+    final Uri uri = Uri.parse('http://185.251.89.34:8080/publications/$postId/comments');
     final response = await http.get(
       uri,
       headers: <String, String>{
@@ -415,7 +415,7 @@ class PublicationUtils {
 
   static Future<void> sendComment(int postId, String text) async {
     var token = await TokenStorage.getToken();
-    final Uri uri = Uri.parse('http://46.19.66.10:8080/publications/$postId/comments');
+    final Uri uri = Uri.parse('http://185.251.89.34:8080/publications/$postId/comments');
     final Map<String, String> headers = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer $token',
@@ -443,7 +443,7 @@ class PublicationUtils {
 
     var request = http.MultipartRequest(
       'PATCH',
-      Uri.parse('http://46.19.66.10:8080/users/$userId'),
+      Uri.parse('http://185.251.89.34:8080/users/$userId'),
     );
 
     request.headers['Authorization'] = 'Bearer $token';
@@ -468,7 +468,7 @@ class PublicationUtils {
 
     var request = http.MultipartRequest(
       'PATCH',
-      Uri.parse('http://46.19.66.10:8080/users/$userId'),
+      Uri.parse('http://185.251.89.34:8080/users/$userId'),
     );
 
     request.headers['Authorization'] = 'Bearer $token';
@@ -486,7 +486,7 @@ class PublicationUtils {
       var token = await TokenStorage.getToken();
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://46.19.66.10:8080/publications'),
+        Uri.parse('http://185.251.89.34:8080/publications'),
       );
 
       request.headers['Authorization'] = 'Bearer $token';
@@ -520,7 +520,7 @@ class PublicationUtils {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://46.19.66.10:8080/publications'),
+        Uri.parse('http://185.251.89.34:8080/publications'),
       );
 
       request.headers['Authorization'] = 'Bearer $token';
@@ -551,7 +551,7 @@ class PublicationUtils {
 
   static Future<int> deletePost(int postId) async {
     var token = await TokenStorage.getToken();
-    final url = Uri.parse('http://46.19.66.10:8080/publications/$postId');
+    final url = Uri.parse('http://185.251.89.34:8080/publications/$postId');
 
     final response = await http.delete(
       url,
@@ -565,7 +565,7 @@ class PublicationUtils {
 
   static Future<int> editAchievements(int userId, List<String> achievements) async {
     var token = await TokenStorage.getToken();
-    final url = Uri.parse('http://46.19.66.10:8080/users/$userId/achievements');
+    final url = Uri.parse('http://185.251.89.34:8080/users/$userId/achievements');
 
     final response = await http.patch(
       url,
@@ -600,7 +600,7 @@ class PublicationUtils {
 
   static Future<List<Post>> getPosts(BuildContext context, Author author) async {
     int userId = author.userId;
-    return PublicationUtils.fetchPublications('http://46.19.66.10:8080/publications/user/$userId', context);
+    return PublicationUtils.fetchPublications('http://185.251.89.34:8080/publications/user/$userId', context);
   }
 
   static Future<void> checkRoleNMP(State state, NotMyProfile widget) async {

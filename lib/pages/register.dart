@@ -34,7 +34,7 @@ class _RegisterState extends State<Register> {
     if (_isChecked && name.isNotEmpty && email.isNotEmpty &&
         password.isNotEmpty) {
       UserCredentials().setUsername(name);
-      var url = Uri.parse('http://46.19.66.10:8080/registration');
+      var url = Uri.parse('http://185.251.89.34:8080/registration');
       var response = await http.post(
         url,
         headers: <String, String>{
@@ -60,14 +60,10 @@ class _RegisterState extends State<Register> {
             String role = roles.first;
             await TokenStorage.saveRole(role);
             print(role);
-            var posts = await PublicationUtils.fetchPublications(
-                'http://46.19.66.10:8080/publications', context);
-            var personalposts = await PublicationUtils.fetchPublications(
-                'http://46.19.66.10:8080/publications/subscriptions', context);
             Navigator.pushReplacement(
               context,
               CustomPageRoute(
-                  page: Lenta(posts: posts, personal_posts: personalposts,)),
+                  page: Lenta()),
             );
           } else {
             print('Роль отсутствует в токене');

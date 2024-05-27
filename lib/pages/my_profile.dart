@@ -37,19 +37,24 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   List<Achievement> achievements = [];
   List<Achievement> allAchievements = [];
 
+  bool _isLoadingAchievements = true;
+  bool _isLoadingPosts = true;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
 
     getAchievements(widget.author).then((fetchedAchievements) {
-      // После получения постов обновляем состояние виджета
       setState(() {
         achievements = fetchedAchievements;
         PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        _isLoadingAchievements = false;
       });
     }).catchError((error) {
-      // Обрабатываем ошибку при получении достижений
+      setState(() {
+        _isLoadingAchievements = false;
+      });
       PublicationUtils.showErrorDialog(context, error.toString());
     });
 
@@ -58,8 +63,12 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
       setState(() {
         posts = fetchedPosts;
         PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        _isLoadingPosts = false;
       });
     }).catchError((error) {
+      setState(() {
+        _isLoadingPosts = false;
+      });
       PublicationUtils.showErrorDialog(context, error.toString());
     });
     PublicationUtils.checkRoleMP(this, widget);
@@ -68,7 +77,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('http://46.19.66.10:8080/users/$userId/achievements');
+    return PublicationUtils.getAchievements('http://185.251.89.34:8080/users/$userId/achievements');
   }
 
   @override
@@ -273,7 +282,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
               thickness: 1,
             ),
             SizedBox(height: 15),
-            ListView.builder(
+            _isLoadingAchievements // Проверка загрузки достижений
+                ? Center(child: CircularProgressIndicator()) // Индикатор загрузки
+                : ListView.builder(
               shrinkWrap: true,
               itemCount: achievements.isNotEmpty ? achievements.length : 1, // Проверяем длину списка достижений
               itemBuilder: (context, index) {
@@ -314,7 +325,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Widget _buildPostsWidget() {
-    return ListView.builder(
+    return _isLoadingPosts // Проверка загрузки постов
+        ? Center(child: CircularProgressIndicator()) // Индикатор загрузки
+        : ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: posts.length,
@@ -420,11 +433,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                     'Click on "Like" button');
 
                                 var code = await handleReaction(post, 'LIKE');
-                                if (code == 201) {
-                                  setState(() {
-                                    posts[index] = post;
-                                  });
-                                }
+                                setState(() {
+                                  posts[index] = post;
+                                });
                               },
                               icon: Icon(
                                 Icons.thumb_up,
@@ -436,11 +447,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                                 AppMetrica.reportEvent(
                                     'Click on "Dislike" button');
                                 var code = await handleReaction(post, 'DISLIKE');
-                                if (code == 201) {
-                                  setState(() {
-                                    posts[index] = post;
-                                  });
-                                }
+                                setState(() {
+                                  posts[index] = post;
+                                });
                               },
                               icon: Icon(
                                 Icons.thumb_down,
@@ -701,6 +710,6 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('http://46.19.66.10:8080/users/achievements');
+    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:8080/users/achievements');
   }
 }

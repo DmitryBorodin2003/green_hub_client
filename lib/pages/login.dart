@@ -29,7 +29,7 @@ class _LoginState extends State<Login> {
 
     if (name.isNotEmpty && password.isNotEmpty) {
       UserCredentials().setUsername(name);
-      var url = Uri.parse('http://46.19.66.10:8080/auth');
+      var url = Uri.parse('http://185.251.89.34:8080/auth');
       var response = await http.post(
         url,
         headers: <String, String>{
@@ -52,14 +52,10 @@ class _LoginState extends State<Login> {
           if (roles.isNotEmpty) {
             String role = roles.first;
             await TokenStorage.saveRole(role);
-            var posts = await PublicationUtils.fetchPublications(
-                'http://46.19.66.10:8080/publications', context);
-            var personalposts = await PublicationUtils.fetchPublications(
-                'http://46.19.66.10:8080/publications/subscriptions', context);
             Navigator.pushReplacement(
               context,
               CustomPageRoute(
-                  page: Lenta(posts: posts, personal_posts: personalposts,)),
+                  page: Lenta()),
             );
           } else {
             print('Роль отсутствует в токене');

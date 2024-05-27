@@ -21,24 +21,11 @@ class BottomNavigationLogic {
       case 0:
       //Действия при выборе ленты
         AppMetrica.reportEvent('Click on "Lenta" button');
-        if (await TokenStorage.getToken() != null) {
-          var posts = await PublicationUtils.fetchPublications(
-              'http://46.19.66.10:8080/publications', context);
-          var personalposts = await PublicationUtils.fetchPublications(
-              'http://46.19.66.10:8080/publications/subscriptions', context);
-          Navigator.pushReplacement(
-            context,
-            CustomPageRoute(
-                page: Lenta(posts: posts, personal_posts: personalposts,)),
-          );
-        } else {
-          Navigator.pushReplacement(
-            context,
-            CustomPageRoute(
-                page: Lenta(posts: await PublicationUtils.fetchPublicationsWithoutToken(
-                    'http://46.19.66.10:8080/publications'), personal_posts: []),
-          ));
-        }
+        Navigator.pushReplacement(
+          context,
+          CustomPageRoute(
+              page: Lenta()),
+        );
         break;
       case 1:
       // Действия при выборе создания поста
@@ -63,16 +50,10 @@ class BottomNavigationLogic {
         //Действия при выборе страницы подписки/подписчики
         AppMetrica.reportEvent('Click on "Subscriptions" button');
         if (await TokenStorage.getToken() != null) {
-          String? currentUsername = UserCredentials().username;
-          if (currentUsername != null) {
-            var subscriptionsAndSubscribers = await PublicationUtils.fetchSubscriptionsAndSubscribers(currentUsername!);
-            List<Author> subscriptionList = subscriptionsAndSubscribers[0];
-            List<Author> subscribersList = subscriptionsAndSubscribers[1];
-            Navigator.pushReplacement(
-              context,
-              CustomPageRoute(page: Subscriptions(subscriptionList: subscriptionList, followerList: subscribersList)),
-            );
-          }
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(page: Subscriptions()),
+          );
         } else {
           Navigator.pushReplacement(
             context,

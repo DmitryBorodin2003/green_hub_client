@@ -18,8 +18,7 @@ Future<void> main() async {
       theme: ThemeData(
         primaryColor: Colors.green,
       ),
-      home: Lenta(posts: await PublicationUtils.fetchPublicationsWithoutToken(
-      'http://46.19.66.10:8080/publications'), personal_posts: []),
+      home: Lenta(),
   ));
 }
 

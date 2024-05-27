@@ -35,6 +35,8 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
   bool isSubscribed = false;
   bool isBanned = false;
   bool isModerator = false;
+  bool _isLoadingAchievements = true;
+  bool _isLoadingPosts = true;
 
   @override
   void initState() {
@@ -45,13 +47,15 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
     _tabController = TabController(length: 1, vsync: this);
 
     getAchievements(widget.author).then((fetchedAchievements) {
-      // После получения постов обновляем состояние виджета
       setState(() {
         achievements = fetchedAchievements;
         PublicationUtils.decodeImagesNMP(widget, posts, achievements);
+        _isLoadingAchievements = false;
       });
     }).catchError((error) {
-      // Обрабатываем ошибку при получении достижений
+      setState(() {
+        _isLoadingAchievements = false;
+      });
       PublicationUtils.showErrorDialog(context, error.toString());
     });
 
@@ -60,9 +64,12 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
       setState(() {
         posts = fetchedPosts;
         PublicationUtils.decodeImagesNMP(widget, posts, achievements);
+        _isLoadingPosts = false;
       });
     }).catchError((error) {
-      // Обрабатываем ошибку при получении постов
+      setState(() {
+        _isLoadingPosts = false;
+      });
       PublicationUtils.showErrorDialog(context, error.toString());
     });
 
@@ -153,7 +160,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                 thickness: 1,
               ),
               SizedBox(height: 15),
-              ListView.builder(
+              _isLoadingAchievements // Проверка загрузки достижений
+                  ? Center(child: CircularProgressIndicator()) // Индикатор загрузки
+                  : ListView.builder(
                 shrinkWrap: true,
                 itemCount: achievements.isNotEmpty ? achievements.length : 1, // Проверяем длину списка достижений
                 itemBuilder: (context, index) {
@@ -257,9 +266,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                 InkWell(
                   onTap: () {
                     String url = isSubscribed
-                        ? 'http://46.19.66.10:8080/users/' +
+                        ? 'http://185.251.89.34:8080/users/' +
                         widget.author.userId.toString() + '/unsubscribe'
-                        : 'http://46.19.66.10:8080/users/' +
+                        : 'http://185.251.89.34:8080/users/' +
                         widget.author.userId.toString() + '/subscribe';
                     PublicationUtils.subscribeOrUnsubscribe(url);
                     setState(() {
@@ -398,7 +407,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
   }
 
   Widget _buildPostsWidget() {
-    return ListView.builder(
+    return _isLoadingPosts // Проверка загрузки постов
+        ? Center(child: CircularProgressIndicator()) // Индикатор загрузки
+        : ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       itemCount: posts.length,
@@ -482,11 +493,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                   onPressed: () async {
                                     AppMetrica.reportEvent('Click on "Like" button');
                                     var code = await handleReaction(post, 'LIKE');
-                                    if (code == 201) {
-                                      setState(() {
-                                        posts[index] = post;
-                                      });
-                                    }
+                                    setState(() {
+                                      posts[index] = post;
+                                    });
                                   },
                                   icon: Icon(
                                     Icons.thumb_up,
@@ -497,11 +506,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                                   onPressed: () async {
                                     AppMetrica.reportEvent('Click on "Dislike" button');
                                     var code = await handleReaction(post, 'DISLIKE');
-                                    if (code == 201) {
-                                      setState(() {
-                                        posts[index] = post;
-                                      });
-                                    }
+                                    setState(() {
+                                      posts[index] = post;
+                                    });
                                   },
                                   icon: Icon(
                                     Icons.thumb_down,
@@ -583,11 +590,11 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('http://46.19.66.10:8080/users/$userId/achievements');
+    return PublicationUtils.getAchievements('http://185.251.89.34:8080/users/$userId/achievements');
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('http://46.19.66.10:8080/users/achievements');
+    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:8080/users/achievements');
   }
 
   // Метод для показа диалогового окна удаления поста

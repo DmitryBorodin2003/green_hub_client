@@ -19,12 +19,8 @@ import 'login.dart';
 import 'my_profile.dart';
 
 class Lenta extends StatefulWidget {
-  final List<Post> posts;
-  final List<Post> personal_posts;
   bool? role = false;
   Null array;
-
-  Lenta({required this.posts, required this.personal_posts});
 
   @override
   _LentaState createState() => _LentaState();
@@ -32,7 +28,7 @@ class Lenta extends StatefulWidget {
 
 class _LentaState extends State<Lenta> with TickerProviderStateMixin {
   late TabController _tabController;
-  int? selectedOptionIndex; // Индекс выбранной опции сортировки
+  int? selectedOptionIndex;
   List<String> _selectedTags = [];
   List<String> _availableTags = [
     'Воронеж',
@@ -43,15 +39,35 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     'Здоровье',
     'Саморазвитие',
   ];
+  List<Post> _posts = [];
+  List<Post> _personalPosts = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadPosts();
     _tabController.index = 0; // Устанавливаем активную вкладку по умолчанию
     selectedOptionIndex = 0; // При инициализации выбора нет
-    decodeImages();
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoading = true;
+    });
+    String? token = await TokenStorage.getToken();
+    if (token != null) {
+      _posts = await PublicationUtils.fetchPublications('http://185.251.89.34:8080/publications', context);
+      _personalPosts = await PublicationUtils.fetchPublications('http://185.251.89.34:8080/publications/subscriptions', context);
+    } else {
+      _posts = await PublicationUtils.fetchPublicationsWithoutToken('http://185.251.89.34:8080/publications');
+    }
     _sortPosts();
+    setState(() {
+      _isLoading = false;
+    });
+    decodeImages();
     checkRole();
   }
 
@@ -66,22 +82,22 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
 
   List<Post> getOppositeArray(List<Post> array) {
     var arr;
-    if (array == widget.posts) {
-      arr = widget.personal_posts;
+    if (array == _posts) {
+      arr = _personalPosts;
     }
-    else if (array == widget.personal_posts) {
-      arr = widget.posts;
+    else if (array == _personalPosts) {
+      arr = _posts;
     }
     return arr;
   }
 
   // Предварительно декодировать изображения при загрузке постов
   void decodeImages() {
-    for (var post in widget.posts) {
+    for (var post in _posts) {
       post.decodedAvatar = base64.decode(post.author.userImage);
       post.decodedImage = base64.decode(post.image);
     }
-    for (var post in widget.personal_posts) {
+    for (var post in _personalPosts) {
       post.decodedAvatar = base64.decode(post.author.userImage);
       post.decodedImage = base64.decode(post.image);
     }
@@ -249,11 +265,11 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
 
   void _sortPosts() {
     if (selectedOptionIndex == 1) {
-      widget.posts.sort((a, b) => b.rating.compareTo(a.rating));
-      widget.personal_posts.sort((a, b) => b.rating.compareTo(a.rating));
+      _posts.sort((a, b) => b.rating.compareTo(a.rating));
+      _personalPosts.sort((a, b) => b.rating.compareTo(a.rating));
     } else if (selectedOptionIndex == 0) {
-      widget.posts.sort((a, b) => b.createdTime.compareTo(a.createdTime));
-      widget.personal_posts.sort((a, b) => b.createdTime.compareTo(a.createdTime));
+      _posts.sort((a, b) => b.createdTime.compareTo(a.createdTime));
+      _personalPosts.sort((a, b) => b.createdTime.compareTo(a.createdTime));
     }
 
     setState(() {});
@@ -262,12 +278,11 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
   void _applyTagFilter() {
     if (_selectedTags.isEmpty) {
       setState(() {
-
         _selectedTags.clear();
-        for (var post in widget.posts) {
+        for (var post in _posts) {
           post.hidden = false;
         }
-        for (var post in widget.personal_posts) {
+        for (var post in _personalPosts) {
           post.hidden = false;
         }
       });
@@ -275,14 +290,14 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
     }
 
     setState(() {
-      for (var post in widget.posts) {
+      for (var post in _posts) {
         if (post.tags.every((tag) => !_selectedTags.contains(tag))) {
           post.hidden = true;
         } else {
           post.hidden = false;
         }
       }
-      for (var post in widget.personal_posts) {
+      for (var post in _personalPosts) {
         if (post.tags.every((tag) => !_selectedTags.contains(tag))) {
           post.hidden = true;
         } else {
@@ -373,29 +388,15 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
            ],
          ),
        ),
-       body: TabBarView(
-         controller: _tabController,
-         children: [
-           // Содержимое для вкладки "Лента"
-           ListView.builder(
-             itemCount: widget.posts.length,
-             itemBuilder: (context, index) {
-               final post = widget.posts[index];
-               return buildPostCard(context, widget.posts, post, index, Key('${post.id}_$index'),);
-
-             },
-           ),
-
-           // Содержимое для вкладки "Подписки"
-           ListView.builder(
-             itemCount: widget.personal_posts.length,
-             itemBuilder: (context, index) {
-               final post = widget.personal_posts[index];
-               return buildPostCard(context, widget.personal_posts, post, index, Key('${post.id}_$index'),);
-             },
-           ),
-         ],
-       ),
+         body: _isLoading
+             ? Center(child: CircularProgressIndicator())
+             : TabBarView(
+           controller: _tabController,
+           children: [
+             _buildPostList(_posts),
+             _buildPostList(_personalPosts),
+           ],
+         ),
 
        bottomNavigationBar: CustomBottomNavigationBar(
          onTap: (index) {
@@ -405,6 +406,19 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
      ),
     );
   }
+
+  Widget _buildPostList(List<Post> posts) {
+    if (posts.isEmpty) {
+      return Center(child: Text('Постов нет'));
+    }
+    return ListView.builder(
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        return buildPostCard(context, posts, posts[index], index, Key('${posts[index].id}_$index'));
+      },
+    );
+  }
+
 
   Widget buildPostCard(BuildContext context, List<Post> array, Post post, int index, Key key) {
     if (post.hidden) {
@@ -504,14 +518,12 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                                   var secondArray = getOppositeArray(array);
                                   var x = findPostIndex(post, secondArray);
                                   var code = await handleReaction(post, 'LIKE');
-                                  if (code == 201) {
-                                    setState(() {
-                                      array[index] = post;
-                                      if (x != null) {
-                                        secondArray[x] = post;
-                                      }
-                                    });
-                                  }
+                                  setState(() {
+                                    array[index] = post;
+                                    if (x != null) {
+                                      secondArray[x] = post;
+                                    }
+                                  });
                                 } else {
                                   Navigator.pushReplacement(
                                     context,
@@ -536,14 +548,13 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
                                   var secondArray = getOppositeArray(array);
                                   var x = findPostIndex(post, secondArray);
                                   var code = await handleReaction(post, 'DISLIKE');
-                                  if (code == 201) {
-                                    setState(() {
-                                      array[index] = post;
-                                      if (x != null) {
-                                        secondArray[x] = post;
-                                      }
-                                    });
-                                  }
+                                  //TODO обработка кода успешного лайка дизлайка
+                                  setState(() {
+                                    array[index] = post;
+                                    if (x != null) {
+                                      secondArray[x] = post;
+                                    }
+                                  });
                                 } else {
                                   Navigator.pushReplacement(
                                     context,
@@ -643,13 +654,8 @@ class _LentaState extends State<Lenta> with TickerProviderStateMixin {
 
   Future<void> checkRole() async {
     String? role = await TokenStorage.getRole();
-    if (role == 'ROLE_ADMIN' || role == 'ROLE_MODERATOR') {
-      widget.role = true;
-    } else {
-      widget.role = false;
-    }
     setState(() {
-      widget.role;
+      widget.role = role == 'ROLE_ADMIN' || role == 'ROLE_MODERATOR';
     });
   }
 
