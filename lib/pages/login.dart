@@ -69,6 +69,42 @@ class _LoginState extends State<Login> {
           CustomPageRoute(
               page: BannedPage()),
         );
+      } else if (response.statusCode == 400) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ошибка'),
+              content: Text('Некорректное имя пользователя'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 404) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ошибка'),
+              content: Text('Пользователь не зарегистрирован'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
       }
       else {
         showDialog(
@@ -76,7 +112,7 @@ class _LoginState extends State<Login> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Ошибка при входе на стороне сервера: ' + response.statusCode.toString()),
+              content: Text('Ошибка: ' + response.statusCode.toString()),
               actions: [
                 TextButton(
                   onPressed: () {

@@ -26,50 +26,152 @@ class _RegisterState extends State<Register> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
 
+  bool _validateName(String value) {
+    final RegExp nameRegExp = RegExp(r'^[a-zA-Z_](?=[\w.]{2,19}$)\w*\.?\w*$');
+    if (!nameRegExp.hasMatch(value)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateEmail(String value) {
+    final RegExp emailRegExp = RegExp(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b');
+    if (!emailRegExp.hasMatch(value)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _validatePassword(String value) {
+    if (value.length > 20) {
+      return false;
+    }
+    return true;
+  }
+
   void _handleRegister() async {
     String name = _nameController.text.trim();
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
-    if (_isChecked && name.isNotEmpty && email.isNotEmpty &&
-        password.isNotEmpty) {
-      UserCredentials().setUsername(name);
-      var url = Uri.parse('http://185.251.89.34:80/registration');
-      var response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'username': name,
-          'email': email,
-          'password': password,
-        }),
-      );
+    if (name.isNotEmpty && email.isNotEmpty && password.isNotEmpty) {
+      if (_isChecked) {
+        if (_validateName(name)) {
+          if (_validateEmail(email)) {
+            if (_validatePassword(password)) {
+              UserCredentials().setUsername(name);
+              var url = Uri.parse('http://185.251.89.34:80/registration');
+              var response = await http.post(
+                url,
+                headers: <String, String>{
+                  'Content-Type': 'application/json; charset=UTF-8',
+                },
+                body: jsonEncode(<String, String>{
+                  'username': name,
+                  'email': email,
+                  'password': password,
+                }),
+              );
 
-      if (response.statusCode == 201) {
-        var responseData = json.decode(response.body);
-        var token = responseData['token'];
-        await TokenStorage.saveToken(token);
+              if (response.statusCode == 201) {
+                var responseData = json.decode(response.body);
+                var token = responseData['token'];
+                await TokenStorage.saveToken(token);
 
-        Map<String, dynamic>? decodedToken = JwtDecoder.decode(token);
+                Map<String, dynamic>? decodedToken = JwtDecoder.decode(token);
 
-        if (decodedToken.containsKey('roles')) {
-          List<dynamic> roles = decodedToken['roles'];
-          if (roles.isNotEmpty) {
-            String role = roles.first;
-            await TokenStorage.saveRole(role);
-            print(role);
-            Navigator.pushReplacement(
-              context,
-              CustomPageRoute(
-                  page: Lenta()),
-            );
+                if (decodedToken.containsKey('roles')) {
+                  List<dynamic> roles = decodedToken['roles'];
+                  if (roles.isNotEmpty) {
+                    String role = roles.first;
+                    await TokenStorage.saveRole(role);
+                    print(role);
+                    Navigator.pushReplacement(
+                      context,
+                      CustomPageRoute(
+                          page: Lenta()),
+                    );
+                  } else {
+                    print('Роль отсутствует в токене');
+                  }
+                } else {
+                  print('Не удалось распарсить токен или поле "roles" отсутствует');
+                }
+              } else {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Ошибка'),
+                      content: Text('Ошибка: ' + response.statusCode.toString()),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Закрыть всплывающее окно
+                          },
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            } else {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Ошибка'),
+                    content: Text('Пароль не должен быть длиннее 20 символов'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Закрыть всплывающее окно
+                        },
+                        child: Text('OK'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
           } else {
-            print('Роль отсутствует в токене');
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Ошибка'),
+                  content: Text('Некорректный адрес электронной почты'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Закрыть всплывающее окно
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           }
         } else {
-          print('Не удалось распарсить токен или поле "roles" отсутствует');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Ошибка'),
+                content: Text('Имя пользователя не должно содержать кирилицу и быть длиннее 20 символов'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Закрыть всплывающее окно
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
         }
       } else {
         showDialog(
@@ -77,7 +179,7 @@ class _RegisterState extends State<Register> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Ошибка при регистрации на стороне сервера: ' + response.statusCode.toString()),
+              content: Text('Подтвердите согласие с пользовательским соглашением'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -90,13 +192,14 @@ class _RegisterState extends State<Register> {
           },
         );
       }
+
     } else {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Ошибка'),
-            content: Text('Ошибка при регистрации на стороне клиента: некорректный ввод'),
+            content: Text('Поля не должны быть пустыми'),
             actions: [
               TextButton(
                 onPressed: () {

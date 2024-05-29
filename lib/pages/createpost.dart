@@ -114,25 +114,79 @@ class _CreatePostState extends State {
     );
   }
 
+  bool _validateTitle(String value) {
+    if (value.length > 20) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateText(String value) {
+    if (value.length > 255) {
+      return false;
+    }
+    return true;
+  }
+
   // Функция для обработки нажатия на кнопку "Добавить"
   Future<void> _onAddButtonPressed() async {
     AppMetrica.reportEvent('Click on "Add post" button');
-    var code;
-    if (_pickedImage != null) {
-      code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
+    if (_validateTitle(_titleController.text)) {
+      if (_validateText(_textController.text)) {
+        var code;
+        if (_pickedImage != null) {
+          code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
+        } else {
+          code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
+        }
+        print(code);
+        if (code == 201) {
+          Navigator.pushReplacement(
+            context,
+            CustomPageRoute(
+                page: Lenta()),
+          );
+        } else {
+          // Обработка ошибки при отправке данных
+          print('Ошибка при отправке данных:');
+        }
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ошибка'),
+              content: Text('Текст публикации не должен быть длиннее 256 символов'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } else {
-      code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
-    }
-    print(code);
-    if (code == 201) {
-      Navigator.pushReplacement(
-        context,
-        CustomPageRoute(
-            page: Lenta()),
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text('Заголовок не должен быть длиннее 20 символов'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
       );
-    } else {
-      // Обработка ошибки при отправке данных
-      print('Ошибка при отправке данных:');
     }
   }
 

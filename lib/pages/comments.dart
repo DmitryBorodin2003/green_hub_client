@@ -19,6 +19,14 @@ class Comments extends StatefulWidget {
 
 class _CommentState extends State<Comments> {
   final TextEditingController _commentController = TextEditingController();
+
+  bool _validateText(String value) {
+    if (value.length > 255) {
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,15 +108,49 @@ class _CommentState extends State<Comments> {
                   onPressed: () async {
                     AppMetrica.reportEvent('Click on "Send comment" button');
                     FocusScope.of(context).unfocus();
-                    String newCommentText = TextEditingController().text;
-                    print(newCommentText);
-                    try {
-                      await PublicationUtils.sendComment(widget.postId, _commentController.text);
-                      _commentController.clear();
-                      setState(() {
-                      });
-                    } catch (error) {
-                      print('Ошибка при отправке комментария: $error');
+                    if (_validateText(_commentController.text)) {
+                      try {
+                        await PublicationUtils.sendComment(widget.postId, _commentController.text);
+                        _commentController.clear();
+                        setState(() {
+                        });
+                      } catch (error) {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Ошибка'),
+                              content: Text('Ошибка при отправке комментария'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                                  },
+                                  child: Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Ошибка'),
+                            content: Text('Текст комментария не должен превышать 256 символов'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     }
                   },
                   icon: Icon(Icons.send, color: Colors.green),
