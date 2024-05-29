@@ -87,6 +87,24 @@ class _LoginState extends State<Login> {
             );
           },
         );
+      } else if (response.statusCode == 401) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Ошибка'),
+              content: Text('Неверный пароль'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Закрыть всплывающее окно
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
       } else if (response.statusCode == 404) {
         showDialog(
           context: context,
