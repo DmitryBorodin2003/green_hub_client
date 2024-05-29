@@ -1,16 +1,10 @@
-import 'dart:convert';
-
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-import '../publication_utils.dart';
-import '../token_storage.dart';
-import 'bottom_navigation_bar.dart';
-import 'bottom_navigation_logic.dart';
-import 'package:http/http.dart' as http;
-
-import 'custom_page_route.dart';
+import 'package:green_hub_client/utilities/publication_utils.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
+import 'package:green_hub_client/utilities/custom_page_route.dart';
 import 'lenta.dart';
 
 class Createpost extends StatefulWidget {

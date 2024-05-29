@@ -1,18 +1,18 @@
-import 'dart:convert';
-import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
-import 'package:green_hub_client/publication_utils.dart';
-import '../achievement.dart';
-import '../author.dart';
-import '../post.dart';
-import 'bottom_navigation_bar.dart';
-import 'bottom_navigation_logic.dart';
+import 'package:green_hub_client/utilities/publication_utils.dart';
+import 'package:green_hub_client/models/achievement.dart';
+import 'package:green_hub_client/models/author.dart';
+import 'package:green_hub_client/models/post.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
+import '../utilities/action_utils.dart';
+import '../utilities/user_utils.dart';
 import 'comments.dart';
-import 'custom_page_route.dart';
-import 'iconselectiondialog.dart';
+import 'package:green_hub_client/utilities/custom_page_route.dart';
+import 'package:green_hub_client/utilities/iconselectiondialog.dart';
 
 
 class NotMyProfile extends StatefulWidget {
@@ -56,7 +56,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
     getAchievements(widget.author).then((fetchedAchievements) {
       setState(() {
         achievements = fetchedAchievements;
-        PublicationUtils.decodeImagesNMP(widget, posts, achievements);
+        UserUtils.decodeImagesNMP(widget, posts, achievements);
         _isLoadingAchievements = false;
       });
     }).catchError((error) {
@@ -68,7 +68,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
 
     _loadPosts();
 
-    PublicationUtils.checkRoleNMP(this, widget);
+    UserUtils.checkRoleNMP(this, widget);
 
     getAllAchievements();
 
@@ -94,7 +94,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
         _scrollPosition = _scrollController.position.pixels;
         posts.addAll(fetchedPosts);
         _totalPages;
-        PublicationUtils.decodeImagesNMP(widget, posts, achievements);
+        UserUtils.decodeImagesNMP(widget, posts, achievements);
         _isLoadingPosts = false;
         _postPage++;
         WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -129,7 +129,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
       setState(() {
         _scrollPosition = _scrollController.position.pixels;
         posts.addAll(fetchedPosts);
-        PublicationUtils.decodeImagesNMP(widget, posts, achievements);
+        UserUtils.decodeImagesNMP(widget, posts, achievements);
         _isLoadingMore = false;
         _postPage++;
         WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -347,7 +347,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                         widget.author.userId.toString() + '/unsubscribe'
                         : 'https://greenhubapp.ru:80/users/' +
                         widget.author.userId.toString() + '/subscribe';
-                    PublicationUtils.subscribeOrUnsubscribe(url);
+                    ActionUtils.subscribeOrUnsubscribe(url);
                     setState(() {
                       isSubscribed = !isSubscribed;
                       if (isSubscribed) {
@@ -391,7 +391,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                   visible: (widget.role! || widget.moderRole!),
                   child: InkWell(
                     onTap: () async {
-                      var code = await PublicationUtils.banOrUnbanUser(
+                      var code = await ActionUtils.banOrUnbanUser(
                           widget.author.userId, isBanned);
                       if (code == 200) {
                         setState(() {
@@ -430,7 +430,7 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                   visible: widget.role!,
                   child: InkWell(
                     onTap: () async {
-                      var code = await PublicationUtils.applyOrFireModer(
+                      var code = await ActionUtils.applyOrFireModer(
                           widget.author.userId, isModerator);
                       if (code == 200) {
                         setState(() {
@@ -667,11 +667,11 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
+    return ActionUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
+    allAchievements = await ActionUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
   }
 
   // Метод для показа диалогового окна удаления поста
@@ -734,9 +734,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
     }
     int? code;
     if (post.reactionType != 'null') {
-      code = await PublicationUtils.sendReaction(post.id, reactionType);
+      code = await ActionUtils.sendReaction(post.id, reactionType);
     } else {
-      code = await PublicationUtils.deleteReaction(post.id);
+      code = await ActionUtils.deleteReaction(post.id);
     }
     return code;
   }

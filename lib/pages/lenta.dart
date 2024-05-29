@@ -3,18 +3,17 @@ import 'dart:convert';
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/profile.dart';
-import 'package:green_hub_client/publication_utils.dart';
-import 'package:green_hub_client/token_storage.dart';
-
-import '../../post.dart';
-import '../author.dart';
-import '../user_credentials.dart';
-import 'bottom_navigation_bar.dart';
-import 'bottom_navigation_logic.dart';
+import 'package:green_hub_client/utilities/publication_utils.dart';
+import 'package:green_hub_client/storages/token_storage.dart';
+import 'package:green_hub_client/models/post.dart';
+import 'package:green_hub_client/models/author.dart';
+import '../storages/user_credentials.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
+import '../utilities/action_utils.dart';
+import '../utilities/user_utils.dart';
 import 'comments.dart';
-import 'custom_page_route.dart';
-import 'package:http/http.dart' as http;
-
+import 'package:green_hub_client/utilities/custom_page_route.dart';
 import 'login.dart';
 import 'my_profile.dart';
 
@@ -844,9 +843,9 @@ import 'my_profile.dart';
     }
     int? code;
     if (post.reactionType != 'null') {
-      code = await PublicationUtils.sendReaction(post.id, reactionType);
+      code = await ActionUtils.sendReaction(post.id, reactionType);
     } else {
-      code = await PublicationUtils.deleteReaction(post.id);
+      code = await ActionUtils.deleteReaction(post.id);
     }
     return code;
   }
@@ -854,7 +853,7 @@ import 'my_profile.dart';
   Future<void> fetchDataAndNavigate(BuildContext context, List<Post> array, int index) async {
     if (await TokenStorage.getToken() != null) {
       try {
-        Author? author = await PublicationUtils.fetchAuthorByUsername(array[index].author.username);
+        Author? author = await UserUtils.fetchAuthorByUsername(array[index].author.username);
         if (author != null) {
           if (author.username != UserCredentials().username) {
             Navigator.pushReplacement(

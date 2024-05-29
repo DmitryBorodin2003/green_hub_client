@@ -1,19 +1,15 @@
-import 'dart:convert';
-
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
 import 'package:green_hub_client/pages/subscriptions.dart';
-import 'package:green_hub_client/token_storage.dart';
-import '../author.dart';
-import '../post.dart';
-import '../publication_utils.dart';
-import '../user_credentials.dart';
-import 'createpost.dart';
-import 'custom_page_route.dart';
-import 'login.dart';
-import 'my_profile.dart';
-import 'package:http/http.dart' as http;
+import 'package:green_hub_client/storages/token_storage.dart';
+import 'package:green_hub_client/models/author.dart';
+import '../storages/user_credentials.dart';
+import 'package:green_hub_client/pages/createpost.dart';
+import 'package:green_hub_client/utilities/custom_page_route.dart';
+import 'package:green_hub_client/pages/login.dart';
+import 'package:green_hub_client/pages/my_profile.dart';
+import '../utilities/user_utils.dart';
 
 class BottomNavigationLogic {
   static void handleNavigation(BuildContext context, int index) async {
@@ -70,7 +66,7 @@ class BottomNavigationLogic {
         if (await TokenStorage.getToken() != null) {
           String? currentUsername = UserCredentials().username;
           try {
-            Author? author = await PublicationUtils.fetchAuthorByUsername(currentUsername!);
+            Author? author = await UserUtils.fetchAuthorByUsername(currentUsername!);
             if (author != null) {
               Navigator.pushReplacement(
                 context,

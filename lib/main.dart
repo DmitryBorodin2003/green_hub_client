@@ -1,11 +1,7 @@
-import 'dart:ffi';
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
-import 'package:green_hub_client/pages/login.dart';
-import 'package:green_hub_client/pages/register.dart';
-import 'package:green_hub_client/publication_utils.dart';
-import 'package:green_hub_client/token_storage.dart';
+import 'package:green_hub_client/storages/token_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

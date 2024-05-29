@@ -1,9 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:green_hub_client/publication_utils.dart';
-
-import '../achievement.dart';
+import 'package:green_hub_client/models/achievement.dart';
 
 class IconSelectionDialog extends StatefulWidget {
   final List<String> availableIcons = ['Волонтёр', 'Защитник животных', 'Активный пользователь', 'Веган', 'Велосипедист'];

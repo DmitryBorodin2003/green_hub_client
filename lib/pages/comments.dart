@@ -2,11 +2,12 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
-import 'package:green_hub_client/publication_utils.dart';
-import '../comment.dart';
-import 'bottom_navigation_logic.dart';
-import 'bottom_navigation_bar.dart';
-import 'custom_page_route.dart';
+import 'package:green_hub_client/utilities/publication_utils.dart';
+import 'package:green_hub_client/models/comment.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
+
+import '../utilities/action_utils.dart';
 
 class Comments extends StatefulWidget {
   final int postId;
@@ -57,7 +58,7 @@ class _CommentState extends State<Comments> {
           SizedBox(height: 5),
           Expanded(
             child: FutureBuilder<List<Comment>>(
-              future: PublicationUtils.fetchComments(widget.postId),
+              future: ActionUtils.fetchComments(widget.postId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -129,7 +130,7 @@ class _CommentState extends State<Comments> {
                     } else {
                       if (_validateText(_commentController.text)) {
                         try {
-                          await PublicationUtils.sendComment(widget.postId, _commentController.text);
+                          await ActionUtils.sendComment(widget.postId, _commentController.text);
                           _commentController.clear();
                           setState(() {
                           });

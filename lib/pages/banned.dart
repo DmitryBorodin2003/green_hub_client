@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'custom_page_route.dart';
+import 'package:green_hub_client/utilities/custom_page_route.dart';
 import 'login.dart';
 
 class BannedPage extends StatelessWidget {
