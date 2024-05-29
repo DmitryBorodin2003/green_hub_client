@@ -3,18 +3,19 @@ import 'dart:typed_data';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
-import '../achievement.dart';
-import '../author.dart';
-import '../post.dart';
-import '../publication_utils.dart';
-import '../token_storage.dart';
-import 'bottom_navigation_bar.dart';
-import 'bottom_navigation_logic.dart';
+import 'package:green_hub_client/models/achievement.dart';
+import 'package:green_hub_client/models/author.dart';
+import 'package:green_hub_client/models/post.dart';
+import 'package:green_hub_client/utilities/publication_utils.dart';
+import '../storages/token_storage.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
+import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
+import '../utilities/action_utils.dart';
+import '../utilities/user_utils.dart';
 import 'comments.dart';
-import 'custom_page_route.dart';
-import 'iconselectiondialog.dart';
+import 'package:green_hub_client/utilities/custom_page_route.dart';
+import 'package:green_hub_client/utilities/iconselectiondialog.dart';
 import 'login.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 
@@ -56,7 +57,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
     getAchievements(widget.author).then((fetchedAchievements) {
       setState(() {
         achievements = fetchedAchievements;
-        PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        UserUtils.decodeImagesMP(widget, posts, achievements);
         _isLoadingAchievements = false;
       });
     }).catchError((error) {
@@ -68,7 +69,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
 
     _loadPosts();
 
-    PublicationUtils.checkRoleMP(this, widget);
+    UserUtils.checkRoleMP(this, widget);
     getAllAchievements();
 
     _scrollController.addListener(() {
@@ -93,7 +94,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
         _scrollPosition = _scrollController.position.pixels;
         posts.addAll(fetchedPosts);
         _totalPages;
-        PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        UserUtils.decodeImagesMP(widget, posts, achievements);
         _isLoadingPosts = false;
         _postPage++;
         WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -126,7 +127,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
       setState(() {
         _scrollPosition = _scrollController.position.pixels;
         posts.addAll(fetchedPosts);
-        PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        UserUtils.decodeImagesMP(widget, posts, achievements);
         _isLoadingMore = false;
         _postPage++;
         WidgetsBinding.instance!.addPostFrameCallback((_) {
@@ -152,7 +153,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
+    return ActionUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
   }
 
   @override
@@ -315,7 +316,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
             // Обработка выбранных значков после закрытия диалога
             if (selectedAchievements != null) {
               await PublicationUtils.editAchievements(widget.author.userId, selectedAchievements);
-              Author? author = await PublicationUtils.fetchAuthorByUsername(widget.author.username);
+              Author? author = await UserUtils.fetchAuthorByUsername(widget.author.username);
               if (author != null) {
                 Navigator.pushReplacement(
                   context,
@@ -610,9 +611,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
     }
     int? code;
     if (post.reactionType != 'null') {
-      code = await PublicationUtils.sendReaction(post.id, reactionType);
+      code = await ActionUtils.sendReaction(post.id, reactionType);
     } else {
-      code = await PublicationUtils.deleteReaction(post.id);
+      code = await ActionUtils.deleteReaction(post.id);
     }
     return code;
   }
@@ -806,7 +807,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                         );
                       }
                     } else {
-                      await PublicationUtils.setEmail(widget.author.userId, emailController.text);
+                      await ActionUtils.setEmail(widget.author.userId, emailController.text);
                       widget.author.email = emailController.text;
                     }
                     Navigator.of(context).pop();
@@ -826,6 +827,6 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
+    allAchievements = await ActionUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
   }
 }
