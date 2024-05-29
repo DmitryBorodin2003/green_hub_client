@@ -33,6 +33,7 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   late TabController _tabController;
+  late ScrollController _scrollController;
   List<Post> posts = [];
   List<Achievement> achievements = [];
   List<Achievement> allAchievements = [];
@@ -40,10 +41,17 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   bool _isLoadingAchievements = true;
   bool _isLoadingPosts = true;
 
+  bool _isLoadingMore = false;
+  int _postPage = 0;
+  final int _postsPerPage = 10;
+  int _totalPages = 1;
+  double _scrollPosition = 0.0;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
+    _scrollController = ScrollController();
 
     getAchievements(widget.author).then((fetchedAchievements) {
       setState(() {
@@ -58,26 +66,93 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
       PublicationUtils.showErrorDialog(context, error.toString());
     });
 
+    _loadPosts();
 
-    PublicationUtils.getPosts(context, widget.author).then((fetchedPosts) {
+    PublicationUtils.checkRoleMP(this, widget);
+    getAllAchievements();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        _loadMorePosts();
+      }
+    });
+  }
+
+  Future<void> _loadPosts() async {
+    setState(() {
+      _isLoadingPosts = true;
+    });
+    try {
+      var result = await PublicationUtils.getPosts(
+          context, widget.author, _postPage, _postsPerPage);
+      List<Post> fetchedPosts = result['posts'];
+      _totalPages = result['totalPages']; // Получаем общее количество страниц из ответа
+
+
       setState(() {
-        posts = fetchedPosts;
+        _scrollPosition = _scrollController.position.pixels;
+        posts.addAll(fetchedPosts);
+        _totalPages;
         PublicationUtils.decodeImagesMP(widget, posts, achievements);
         _isLoadingPosts = false;
+        _postPage++;
+        WidgetsBinding.instance!.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(_scrollPosition);
+          }
+        });
       });
-    }).catchError((error) {
+    } catch (error) {
       setState(() {
         _isLoadingPosts = false;
       });
       PublicationUtils.showErrorDialog(context, error.toString());
-    });
-    PublicationUtils.checkRoleMP(this, widget);
-    getAllAchievements();
+    }
   }
+
+  Future<void> _loadMorePosts() async {
+    if (_isLoadingMore || _postPage >= _totalPages) return; // Проверка на наличие страниц
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      var result = await PublicationUtils.getPosts(
+          context, widget.author, _postPage, _postsPerPage);
+
+      // Извлечение данных из результата
+      List<Post> fetchedPosts = (result['posts'] as List<dynamic>).cast<Post>();
+
+      setState(() {
+        _scrollPosition = _scrollController.position.pixels;
+        posts.addAll(fetchedPosts);
+        PublicationUtils.decodeImagesMP(widget, posts, achievements);
+        _isLoadingMore = false;
+        _postPage++;
+        WidgetsBinding.instance!.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(_scrollPosition);
+          }
+        });
+      });
+    } catch (error) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+      PublicationUtils.showErrorDialog(context, error.toString());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('http://185.251.89.34:8080/users/$userId/achievements');
+    return PublicationUtils.getAchievements('http://185.251.89.34:80/users/$userId/achievements');
   }
 
   @override
@@ -85,6 +160,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Color(0xFFDCFED7),
       body: ListView(
+        controller: _scrollController,
         children: [
           SafeArea(
             child: Column(
@@ -96,6 +172,8 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                 _buildAchievementsWidget(),
                 SizedBox(height: 8),
                 _buildPostsWidget(),
+                if (_isLoadingMore)
+                  Center(child: CircularProgressIndicator()),
               ],
             ),
           ),
@@ -710,6 +788,6 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:8080/users/achievements');
+    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:80/users/achievements');
   }
 }

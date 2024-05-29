@@ -34,7 +34,7 @@ class _RegisterState extends State<Register> {
     if (_isChecked && name.isNotEmpty && email.isNotEmpty &&
         password.isNotEmpty) {
       UserCredentials().setUsername(name);
-      var url = Uri.parse('http://185.251.89.34:8080/registration');
+      var url = Uri.parse('http://185.251.89.34:80/registration');
       var response = await http.post(
         url,
         headers: <String, String>{

@@ -123,6 +123,7 @@ class _CreatePostState extends State {
     } else {
       code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
     }
+    print(code);
     if (code == 201) {
       Navigator.pushReplacement(
         context,

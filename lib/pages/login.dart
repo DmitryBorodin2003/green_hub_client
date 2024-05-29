@@ -29,7 +29,7 @@ class _LoginState extends State<Login> {
 
     if (name.isNotEmpty && password.isNotEmpty) {
       UserCredentials().setUsername(name);
-      var url = Uri.parse('http://185.251.89.34:8080/auth');
+      var url = Uri.parse('http://185.251.89.34:80/auth');
       var response = await http.post(
         url,
         headers: <String, String>{
