@@ -108,19 +108,57 @@ class _CommentState extends State<Comments> {
                   onPressed: () async {
                     AppMetrica.reportEvent('Click on "Send comment" button');
                     FocusScope.of(context).unfocus();
-                    if (_validateText(_commentController.text)) {
-                      try {
-                        await PublicationUtils.sendComment(widget.postId, _commentController.text);
-                        _commentController.clear();
-                        setState(() {
-                        });
-                      } catch (error) {
+                    if (_commentController.text.length == 0) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Ошибка'),
+                            content: Text('Поле не должно быть пустым'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    } else {
+                      if (_validateText(_commentController.text)) {
+                        try {
+                          await PublicationUtils.sendComment(widget.postId, _commentController.text);
+                          _commentController.clear();
+                          setState(() {
+                          });
+                        } catch (error) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Ошибка'),
+                                content: Text('Ошибка при отправке комментария'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // Закрыть всплывающее окно
+                                    },
+                                    child: Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      } else {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
                               title: Text('Ошибка'),
-                              content: Text('Ошибка при отправке комментария'),
+                              content: Text('Текст комментария не должен превышать 256 символов'),
                               actions: [
                                 TextButton(
                                   onPressed: () {
@@ -133,24 +171,6 @@ class _CommentState extends State<Comments> {
                           },
                         );
                       }
-                    } else {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Ошибка'),
-                            content: Text('Текст комментария не должен превышать 256 символов'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop(); // Закрыть всплывающее окно
-                                },
-                                child: Text('OK'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
                     }
                   },
                   icon: Icon(Icons.send, color: Colors.green),

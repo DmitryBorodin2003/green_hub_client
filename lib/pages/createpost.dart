@@ -35,6 +35,7 @@ class _CreatePostState extends State {
   ];
   String _selectedTagsText = ''; // Поле для отображения выбранных тегов
   XFile? _pickedImage; // Переменная для хранения выбранного изображения
+  bool _isButtonDisabled = false;
 
   // Функция для открытия галереи и выбора изображения
   Future<void> _pickImageFromGallery() async {
@@ -131,24 +132,99 @@ class _CreatePostState extends State {
   // Функция для обработки нажатия на кнопку "Добавить"
   Future<void> _onAddButtonPressed() async {
     AppMetrica.reportEvent('Click on "Add post" button');
-    if (_validateTitle(_titleController.text)) {
-      if (_validateText(_textController.text)) {
-        var code;
-        if (_pickedImage != null) {
-          code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
-        } else {
-          code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
-        }
-        print(code);
-        if (code == 201) {
-          Navigator.pushReplacement(
-            context,
-            CustomPageRoute(
-                page: Lenta()),
+
+    setState(() {
+      _isButtonDisabled = true;
+    });
+    if (_titleController.text.length == 0 || _textController.text.length == 0) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка'),
+            content: Text('Поля не должны быть пустыми'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Закрыть всплывающее окно
+                },
+                child: Text('OK'),
+              ),
+            ],
           );
+        },
+      );
+    } else {
+      if (_validateTitle(_titleController.text)) {
+        if (_validateText(_textController.text)) {
+          var code;
+          if (_pickedImage != null) {
+            code = await PublicationUtils.postData(_titleController.text, _textController.text, _selectedTags, _pickedImage!);
+          } else {
+            code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
+          }
+          print(code);
+          if (code == 201) {
+            Navigator.pushReplacement(
+              context,
+              CustomPageRoute(
+                  page: Lenta()),
+            );
+          } else if (code == 413) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Ошибка'),
+                  content: Text('Размер загружаемого изображения не должен превышать 10Мб'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Закрыть всплывающее окно
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Ошибка'),
+                  content: Text('Ошибка при отправке данных'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Закрыть всплывающее окно
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         } else {
-          // Обработка ошибки при отправке данных
-          print('Ошибка при отправке данных:');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text('Ошибка'),
+                content: Text('Текст публикации не должен быть длиннее 256 символов'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Закрыть всплывающее окно
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
         }
       } else {
         showDialog(
@@ -156,7 +232,7 @@ class _CreatePostState extends State {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Текст публикации не должен быть длиннее 256 символов'),
+              content: Text('Заголовок не должен быть длиннее 20 символов'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -169,25 +245,11 @@ class _CreatePostState extends State {
           },
         );
       }
-    } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Ошибка'),
-            content: Text('Заголовок не должен быть длиннее 20 символов'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Закрыть всплывающее окно
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
     }
+
+    setState(() {
+      _isButtonDisabled = false;
+    });
   }
 
   @override
@@ -347,7 +409,7 @@ class _CreatePostState extends State {
               SizedBox(height: 20.0),
               Center(
                 child: ElevatedButton(
-                  onPressed: _onAddButtonPressed,
+                  onPressed: _isButtonDisabled ? null : _onAddButtonPressed,
                   child: Text(
                     'Добавить',
                     style: TextStyle(

@@ -152,7 +152,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('http://185.251.89.34:80/users/$userId/achievements');
+    return PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
   }
 
   @override
@@ -760,19 +760,57 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
               margin: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0), // Отступы слева, справа, сверху и снизу
               child: ElevatedButton(
                 onPressed: () async {
-                  if (widget._pickedImageBytes != null) {
-                    var code = await PublicationUtils.setImageAndEmail(widget.author.userId, widget._pickedImage!, emailController.text);
-                    if (code == 200) {
-                      setState(() {
-                        widget.decodedAvatar = widget._pickedImageBytes;
-                        widget.author.email = emailController.text;
-                      });
-                    }
+                  if (emailController.text.length > 49) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Ошибка'),
+                          content: Text('Длина Email не должна превышать 50 символов'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   } else {
-                    await PublicationUtils.setEmail(widget.author.userId, emailController.text);
-                    widget.author.email = emailController.text;
+                    if (widget._pickedImageBytes != null) {
+                      var code = await PublicationUtils.setImageAndEmail(widget.author.userId, widget._pickedImage!, emailController.text);
+                      if (code == 200) {
+                        setState(() {
+                          widget.decodedAvatar = widget._pickedImageBytes;
+                          widget.author.email = emailController.text;
+                        });
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('Ошибка'),
+                              content: Text('Ошибка'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    } else {
+                      await PublicationUtils.setEmail(widget.author.userId, emailController.text);
+                      widget.author.email = emailController.text;
+                    }
+                    Navigator.of(context).pop();
                   }
-                  Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
                   primary: Color(0xFF5fc16f), // Зелёный цвет
@@ -788,6 +826,6 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:80/users/achievements');
+    allAchievements = await PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
   }
 }

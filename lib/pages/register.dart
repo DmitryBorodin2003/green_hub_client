@@ -43,7 +43,7 @@ class _RegisterState extends State<Register> {
   }
 
   bool _validatePassword(String value) {
-    if (value.length > 20) {
+    if (value.length > 49) {
       return false;
     }
     return true;
@@ -60,7 +60,7 @@ class _RegisterState extends State<Register> {
           if (_validateEmail(email)) {
             if (_validatePassword(password)) {
               UserCredentials().setUsername(name);
-              var url = Uri.parse('http://185.251.89.34:80/registration');
+              var url = Uri.parse('https://greenhubapp.ru:80/registration');
               var response = await http.post(
                 url,
                 headers: <String, String>{

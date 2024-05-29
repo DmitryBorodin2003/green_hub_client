@@ -6,11 +6,11 @@
 
 
    <application
-        android:label="greenhub_client"
-       android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+       android:label="GreenHub">
         <activity
             android:name=".MainActivity"
+            android:label="GreenHub"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"

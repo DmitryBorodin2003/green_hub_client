@@ -92,9 +92,9 @@ import 'my_profile.dart';
       int size = 10;
       String url;
       if (_tabController.index == 0) {
-        url = 'http://185.251.89.34:80/publications?page=$_currentPage&size=$size';
+        url = 'https://greenhubapp.ru:80/publications?page=$_currentPage&size=$size';
       } else {
-        url = 'http://185.251.89.34:80/publications/subscriptions?page=$_personalCurrentPage&size=$size';
+        url = 'https://greenhubapp.ru:80/publications/subscriptions?page=$_personalCurrentPage&size=$size';
       }
       print("Fetching from URL: $url");
 

@@ -343,9 +343,9 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
                 InkWell(
                   onTap: () {
                     String url = isSubscribed
-                        ? 'http://185.251.89.34:80/users/' +
+                        ? 'https://greenhubapp.ru:80/users/' +
                         widget.author.userId.toString() + '/unsubscribe'
-                        : 'http://185.251.89.34:80/users/' +
+                        : 'https://greenhubapp.ru:80/users/' +
                         widget.author.userId.toString() + '/subscribe';
                     PublicationUtils.subscribeOrUnsubscribe(url);
                     setState(() {
@@ -667,11 +667,11 @@ class _NotMyProfileState extends State<NotMyProfile> with TickerProviderStateMix
 
   Future<List<Achievement>> getAchievements(Author author) async {
     int userId = author.userId;
-    return PublicationUtils.getAchievements('http://185.251.89.34:80/users/$userId/achievements');
+    return PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/$userId/achievements');
   }
 
   Future<void> getAllAchievements() async {
-    allAchievements = await PublicationUtils.getAchievements('http://185.251.89.34:80/users/achievements');
+    allAchievements = await PublicationUtils.getAchievements('https://greenhubapp.ru:80/users/achievements');
   }
 
   // Метод для показа диалогового окна удаления поста
