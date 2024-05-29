@@ -92,6 +92,7 @@ class _CreatePostState extends State {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                       Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
@@ -122,15 +123,12 @@ class _CreatePostState extends State {
     } else {
       code = await PublicationUtils.postDataWithoutPicture(_titleController.text, _textController.text, _selectedTags);
     }
+    print(code);
     if (code == 201) {
-      var posts = await PublicationUtils.fetchPublications(
-          'http://46.19.66.10:8080/publications', context);
-      var personalposts = await PublicationUtils.fetchPublications(
-          'http://46.19.66.10:8080/publications/subscriptions', context);
       Navigator.pushReplacement(
         context,
         CustomPageRoute(
-            page: Lenta(posts: posts, personal_posts: personalposts,)),
+            page: Lenta()),
       );
     } else {
       // Обработка ошибки при отправке данных

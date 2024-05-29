@@ -6,19 +6,12 @@ import 'package:green_hub_client/pages/profile.dart';
 import 'package:green_hub_client/publication_utils.dart';
 
 import '../author.dart';
+import '../user_credentials.dart';
 import 'bottom_navigation_bar.dart';
 import 'bottom_navigation_logic.dart';
 import 'custom_page_route.dart';
 
 class Subscriptions extends StatefulWidget {
-  final List<Author> subscriptionList;
-  final List<Author> followerList;
-
-  Subscriptions({
-    required this.subscriptionList,
-    required this.followerList,
-  });
-
   @override
   _SubscriptionsPageState createState() => _SubscriptionsPageState();
 }
@@ -26,11 +19,32 @@ class Subscriptions extends StatefulWidget {
 class _SubscriptionsPageState extends State<Subscriptions> with SingleTickerProviderStateMixin {
 
   late TabController _tabController;
+  List<Author> subscriptionList = [];
+  List<Author> followerList = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    String? currentUsername = UserCredentials().username;
+    if (currentUsername != null) {
+      var subscriptionsAndSubscribers = await PublicationUtils.fetchSubscriptionsAndSubscribers(currentUsername);
+      subscriptionList = subscriptionsAndSubscribers[0];
+      followerList = subscriptionsAndSubscribers[1];
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -62,11 +76,13 @@ class _SubscriptionsPageState extends State<Subscriptions> with SingleTickerProv
             Expanded(
               child: Container(
                 color: Color(0xFFDCFED7),
-                child: TabBarView(
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : TabBarView(
                   controller: _tabController,
                   children: [
-                    SubscriptionsList(users: widget.subscriptionList, isSubscriptionList: true),
-                    SubscriptionsList(users: widget.followerList, isSubscriptionList: false),
+                    SubscriptionsList(users: subscriptionList, isSubscriptionList: true),
+                    SubscriptionsList(users: followerList, isSubscriptionList: false),
                   ],
                 ),
               ),
@@ -101,7 +117,7 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
 
   void _unsubscribeUser(int index) async {
     AppMetrica.reportEvent('Click on "Unsubscribe" button');
-    PublicationUtils.subscribeOrUnsubscribe('http://46.19.66.10:8080/users/' + widget.users[index].userId.toString() + '/unsubscribe');
+    PublicationUtils.subscribeOrUnsubscribe('http://185.251.89.34:80/users/' + widget.users[index].userId.toString() + '/unsubscribe');
     // Удалить пользователя из списка
     setState(() {
       widget.users.removeAt(index);
