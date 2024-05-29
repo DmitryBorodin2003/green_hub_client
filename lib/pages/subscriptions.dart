@@ -117,7 +117,7 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
 
   void _unsubscribeUser(int index) async {
     AppMetrica.reportEvent('Click on "Unsubscribe" button');
-    PublicationUtils.subscribeOrUnsubscribe('http://185.251.89.34:80/users/' + widget.users[index].userId.toString() + '/unsubscribe');
+    PublicationUtils.subscribeOrUnsubscribe('https://greenhubapp.ru:80/users/' + widget.users[index].userId.toString() + '/unsubscribe');
     // Удалить пользователя из списка
     setState(() {
       widget.users.removeAt(index);
