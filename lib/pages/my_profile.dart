@@ -614,10 +614,9 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
         return -1;
     }
     int? code;
+    code = await ActionUtils.deleteReaction(post.id);
     if (post.reactionType != 'null') {
       code = await ActionUtils.sendReaction(post.id, reactionType);
-    } else {
-      code = await ActionUtils.deleteReaction(post.id);
     }
     return code;
   }
