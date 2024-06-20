@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/models/post.dart';
 import 'package:green_hub_client/storages/token_storage.dart';
-import 'package:green_hub_client/storages/user_credentials.dart';
 import 'package:green_hub_client/utilities/user_utils.dart';
 import 'package:http/http.dart' as http;
 import 'package:green_hub_client/models/author.dart';
@@ -338,7 +337,7 @@ class PublicationUtils {
 
   static Future<Map<String, dynamic>> getPosts(BuildContext context, Author author, int page, int postsPerPage) async {
     int userId = author.userId;
-    String url = 'https://greenhubapp.ru:80/publications/user/$userId?page=$page&size=$postsPerPage';
+    String url = 'https://greenhubapp.ru:80/publications/user/$userId?sort=createdTime,DESC&page=$page&size=$postsPerPage';
     print(url);
     var response = await fetchPublications(url, context);
 
@@ -367,7 +366,7 @@ class PublicationUtils {
   }
 
   static Future<void> checkToken() async {
-    var name = UserCredentials().username;
+    var name = await TokenStorage.getUsername();
     Author? author;
     if (name != null) {
       author = await UserUtils.fetchAuthorByUsername(name);

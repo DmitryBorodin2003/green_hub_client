@@ -2,12 +2,18 @@ import 'dart:convert';
 
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
+import 'package:green_hub_client/pages/profile.dart';
+import 'package:green_hub_client/storages/token_storage.dart';
 import 'package:green_hub_client/utilities/publication_utils.dart';
 import 'package:green_hub_client/models/comment.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
 
+import '../models/author.dart';
 import '../utilities/action_utils.dart';
+import '../utilities/custom_page_route.dart';
+import '../utilities/user_utils.dart';
+import 'my_profile.dart';
 
 class Comments extends StatefulWidget {
   final int postId;
@@ -217,25 +223,55 @@ class CommentWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundImage: MemoryImage(base64.decode(avatarUrl)),
+              GestureDetector(
+                onTap: () async {
+                  Author? author = await UserUtils.fetchAuthorByUsername(username);
+                  if (author != null) {
+                    if (author.username != await TokenStorage.getUsername()) {
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(page: NotMyProfile(author: author)),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        CustomPageRoute(page: Profile(author: author)),
+                      );
+                    }
+
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: MemoryImage(base64.decode(avatarUrl)),
+                ),
               ),
               SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    username,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                  SizedBox(height: 5),
-                ],
+              GestureDetector(
+                onTap: () async {
+                  Author? author = await UserUtils.fetchAuthorByUsername(username);
+                  if (author != null) {
+                    Navigator.push(
+                      context,
+                      CustomPageRoute(page: NotMyProfile(author: author)),
+                    );
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      username,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                ),
               ),
             ],
           ),
           SizedBox(height: 10),
-          Text(comment, style: TextStyle(fontSize: 22),),
+          Text(comment, style: TextStyle(fontSize: 22)),
         ],
       ),
     );

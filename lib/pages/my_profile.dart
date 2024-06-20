@@ -273,6 +273,7 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                     AppMetrica.reportEvent('Click on "Quit" button');
                     TokenStorage.clearToken();
                     TokenStorage.clearRole();
+                    TokenStorage.clearUsername();
                     Navigator.pushReplacement(
                       context,
                       CustomPageRoute(page: Login()),
@@ -284,13 +285,16 @@ class _ProfileState extends State<Profile> with TickerProviderStateMixin {
                       color: const Color(0xFF5fc16f),
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.exit_to_app, color: const Color(0xFF333333)),
-                        SizedBox(width: 2),
-                        Text('Выйти', style: TextStyle(color: const Color(0xFF333333), fontFamily: 'Roboto', fontSize: 18)),
-                      ],
-                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        children: [
+                          Icon(Icons.exit_to_app, color: const Color(0xFF333333)),
+                          SizedBox(width: 2),
+                          Text('Выйти', style: TextStyle(color: const Color(0xFF333333), fontFamily: 'Roboto', fontSize: 18)),
+                        ],
+                      ),
+                    )
                   ),
                 ),
               ],

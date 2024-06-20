@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/profile.dart';
-import 'package:green_hub_client/utilities/publication_utils.dart';
+import 'package:green_hub_client/storages/token_storage.dart';
 import 'package:green_hub_client/models/author.dart';
-import '../storages/user_credentials.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
 import 'package:green_hub_client/utilities/custom_page_route.dart';
@@ -37,7 +36,7 @@ class _SubscriptionsPageState extends State<Subscriptions> with SingleTickerProv
       isLoading = true;
     });
 
-    String? currentUsername = UserCredentials().username;
+    String? currentUsername = await TokenStorage.getUsername();
     if (currentUsername != null) {
       var subscriptionsAndSubscribers = await UserUtils.fetchSubscriptionsAndSubscribers(currentUsername);
       subscriptionList = subscriptionsAndSubscribers[0];
@@ -143,7 +142,7 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
               onTap: () async {
                 Author? author = await UserUtils.fetchAuthorByUsername(widget.users[index].username);
                 if (author != null) {
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     CustomPageRoute(page: NotMyProfile(author: author)),
                   );
@@ -157,7 +156,7 @@ class _SubscriptionsListState extends State<SubscriptionsList> {
               onTap: () async {
                 Author? author = await UserUtils.fetchAuthorByUsername(widget.users[index].username);
                 if (author != null) {
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     CustomPageRoute(page: NotMyProfile(author: author)),
                   );
