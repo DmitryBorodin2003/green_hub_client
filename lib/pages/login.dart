@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/banned.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../storages/token_storage.dart';
-import '../storages/user_credentials.dart';
 import 'package:green_hub_client/utilities/custom_page_route.dart';
 import 'lenta.dart';
 import 'register.dart';
@@ -27,7 +26,7 @@ class _LoginState extends State<Login> {
     String password = _passwordController.text.trim();
 
     if (name.isNotEmpty && password.isNotEmpty) {
-      UserCredentials().setUsername(name);
+      TokenStorage.saveUsername(name);
       var url = Uri.parse('https://greenhubapp.ru:80/auth');
       var response = await http.post(
         url,
@@ -51,10 +50,10 @@ class _LoginState extends State<Login> {
           if (roles.isNotEmpty) {
             String role = roles.first;
             await TokenStorage.saveRole(role);
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
               context,
-              CustomPageRoute(
-                  page: Lenta()),
+              CustomPageRoute(page: Lenta()),
+                  (Route<dynamic> route) => false,
             );
           } else {
             print('Роль отсутствует в токене');
@@ -74,7 +73,7 @@ class _LoginState extends State<Login> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text('Ошибка'),
-              content: Text('Некорректное имя пользователя'),
+              content: Text('Некорректный ввод'),
               actions: [
                 TextButton(
                   onPressed: () {

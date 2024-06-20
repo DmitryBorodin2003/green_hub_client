@@ -1,14 +1,11 @@
 import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:green_hub_client/pages/lenta.dart';
-import 'package:green_hub_client/storages/token_storage.dart';
+import 'package:green_hub_client/pages/register.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppMetrica.activate(_config);
-
-  await TokenStorage.clearToken();
-  await TokenStorage.clearRole();
 
   runApp(MaterialApp(
       theme: ThemeData(

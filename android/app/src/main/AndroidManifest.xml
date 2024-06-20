@@ -10,6 +10,7 @@
        android:label="GreenHub">
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:label="GreenHub"
             android:exported="true"
             android:launchMode="singleTop"

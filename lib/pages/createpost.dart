@@ -159,11 +159,11 @@ class _CreatePostState extends State {
           }
           print(code);
           if (code == 201) {
-            Navigator.pushReplacement(
-              context,
-              CustomPageRoute(
-                  page: Lenta()),
-            );
+            Navigator.pushAndRemoveUntil(
+                          context,
+                          CustomPageRoute(page: Lenta()),
+                              (Route<dynamic> route) => false,
+                        );
           } else if (code == 413) {
             showDialog(
               context: context,

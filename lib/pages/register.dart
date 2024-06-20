@@ -4,7 +4,6 @@ import 'package:appmetrica_plugin/appmetrica_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../storages/token_storage.dart';
-import '../storages/user_credentials.dart';
 import 'package:green_hub_client/utilities/custom_page_route.dart';
 import 'lenta.dart';
 import 'login.dart';
@@ -40,7 +39,7 @@ class _RegisterState extends State<Register> {
   }
 
   bool _validatePassword(String value) {
-    if (value.length > 49) {
+    if (value.length > 19) {
       return false;
     }
     return true;
@@ -56,7 +55,7 @@ class _RegisterState extends State<Register> {
         if (_validateName(name)) {
           if (_validateEmail(email)) {
             if (_validatePassword(password)) {
-              UserCredentials().setUsername(name);
+              TokenStorage.saveUsername(name);
               var url = Uri.parse('https://greenhubapp.ru:80/registration');
               var response = await http.post(
                 url,
@@ -70,7 +69,8 @@ class _RegisterState extends State<Register> {
                 }),
               );
 
-              if (response.statusCode == 201) {
+              if (response.statusCode == 201)
+              {
                 var responseData = json.decode(response.body);
                 var token = responseData['token'];
                 await TokenStorage.saveToken(token);
@@ -83,10 +83,10 @@ class _RegisterState extends State<Register> {
                     String role = roles.first;
                     await TokenStorage.saveRole(role);
                     print(role);
-                    Navigator.pushReplacement(
+                    Navigator.pushAndRemoveUntil(
                       context,
-                      CustomPageRoute(
-                          page: Lenta()),
+                      CustomPageRoute(page: Lenta()),
+                          (Route<dynamic> route) => false,
                     );
                   } else {
                     print('Роль отсутствует в токене');
@@ -94,7 +94,49 @@ class _RegisterState extends State<Register> {
                 } else {
                   print('Не удалось распарсить токен или поле "roles" отсутствует');
                 }
-              } else {
+              }
+              else if (response.statusCode == 400)
+              {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Ошибка'),
+                      content: Text('Пользователь с таким именем уже зарегистрирован'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Закрыть всплывающее окно
+                          },
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+              else if (response.statusCode == 403)
+              {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Ошибка'),
+                      content: Text('Пользователь с таким адресом почты уже зарегистрирован'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Закрыть всплывающее окно
+                          },
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+              else
+              {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {

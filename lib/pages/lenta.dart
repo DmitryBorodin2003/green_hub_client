@@ -7,7 +7,6 @@ import 'package:green_hub_client/utilities/publication_utils.dart';
 import 'package:green_hub_client/storages/token_storage.dart';
 import 'package:green_hub_client/models/post.dart';
 import 'package:green_hub_client/models/author.dart';
-import '../storages/user_credentials.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_bar.dart';
 import 'package:green_hub_client/bottom_navigation_bar/bottom_navigation_logic.dart';
 import '../utilities/action_utils.dart';
@@ -62,7 +61,8 @@ import 'my_profile.dart';
       _tabController.addListener(() async {
         if (_tabController.index == 1 && _personalPosts.isEmpty) {
           if (await TokenStorage.getToken() == null) {
-            Navigator.pushReplacement(
+            _tabController.index = 0;
+            Navigator.push(
               context,
               CustomPageRoute(
                 page: Login(),
@@ -88,12 +88,12 @@ import 'my_profile.dart';
         print("setState loading: $_isLoadingMore");
       });
 
-      int size = 10;
+      int size = 15;
       String url;
       if (_tabController.index == 0) {
-        url = 'https://greenhubapp.ru:80/publications?page=$_currentPage&size=$size';
+        url = 'https://greenhubapp.ru:80/publications?sort=createdTime,DESC&page=$_currentPage&size=$size';
       } else {
-        url = 'https://greenhubapp.ru:80/publications/subscriptions?page=$_personalCurrentPage&size=$size';
+        url = 'https://greenhubapp.ru:80/publications/subscriptions?sort=createdTime,DESC&page=$_personalCurrentPage&size=$size';
       }
       print("Fetching from URL: $url");
 
@@ -141,6 +141,7 @@ import 'my_profile.dart';
 
       decodeImages();
       checkRole();
+      _sortPosts();
     }
 
     void _scrollToTop() {
@@ -367,7 +368,6 @@ import 'my_profile.dart';
       }
   
       setState(() {});
-      print("setstate на строке 325");
     }
   
     void _applyTagFilter() {
@@ -447,39 +447,42 @@ import 'my_profile.dart';
                    ],
                  ),
                ),
-               TabBar(
-                 controller: _tabController,
-                 tabs: [
-                   Tab(
-                     child: FittedBox(
-                       fit: BoxFit.scaleDown,
-                       child: Text(
-                         'Лента',
-                         style: TextStyle(
-                           fontSize: 25,
+               IgnorePointer(
+                 ignoring: _isLoading,
+                 child: TabBar(
+                   controller: _tabController,
+                   tabs: [
+                     Tab(
+                       child: FittedBox(
+                         fit: BoxFit.scaleDown,
+                         child: Text(
+                           'Лента',
+                           style: TextStyle(
+                             fontSize: 25,
+                           ),
                          ),
                        ),
                      ),
-                   ),
-                   Tab(
-                     child: FittedBox(
-                       fit: BoxFit.scaleDown,
-                       child: Text(
-                         'Подписки',
-                         style: TextStyle(
-                           fontSize: 25,
+                     Tab(
+                       child: FittedBox(
+                         fit: BoxFit.scaleDown,
+                         child: Text(
+                           'Подписки',
+                           style: TextStyle(
+                             fontSize: 25,
+                           ),
                          ),
                        ),
                      ),
+                   ],
+                   indicator: UnderlineTabIndicator(
+                     borderSide: BorderSide(
+                         width: 2.0, color: Colors.green),
                    ),
-                 ],
-                 indicator: UnderlineTabIndicator(
-                   borderSide: BorderSide(
-                       width: 2.0, color: Colors.green),
+                   labelColor: Colors.black,
+                   labelStyle: TextStyle(fontSize: 16),
                  ),
-                 labelColor: Colors.black,
-                 labelStyle: TextStyle(fontSize: 16),
-               ),
+               )
              ],
            ),
          ),
@@ -628,7 +631,7 @@ import 'my_profile.dart';
                                       }
                                     });
                                   } else {
-                                    Navigator.pushReplacement(
+                                    Navigator.push(
                                       context,
                                       CustomPageRoute(
                                         page: Login(),
@@ -659,7 +662,7 @@ import 'my_profile.dart';
                                       }
                                     });
                                   } else {
-                                    Navigator.pushReplacement(
+                                    Navigator.push(
                                       context,
                                       CustomPageRoute(
                                         page: Login(),
@@ -842,10 +845,9 @@ import 'my_profile.dart';
         return -1;
     }
     int? code;
+    await ActionUtils.deleteReaction(post.id);
     if (post.reactionType != 'null') {
       code = await ActionUtils.sendReaction(post.id, reactionType);
-    } else {
-      code = await ActionUtils.deleteReaction(post.id);
     }
     return code;
   }
@@ -855,13 +857,13 @@ import 'my_profile.dart';
       try {
         Author? author = await UserUtils.fetchAuthorByUsername(array[index].author.username);
         if (author != null) {
-          if (author.username != UserCredentials().username) {
-            Navigator.pushReplacement(
+          if (author.username != await TokenStorage.getUsername()) {
+            Navigator.push(
               context,
               CustomPageRoute(page: NotMyProfile(author: author)),
             );
           } else {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               CustomPageRoute(page: Profile(author: author)),
             );
